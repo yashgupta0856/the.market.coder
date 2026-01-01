@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<!-- HOME: TERMINAL ENTRY HERO -->
+
+
+<section class="market-hero">
+
+    <div class="market-hero-header">
+        <div class="hero-title">
+            SYSTEM OVERVIEW
+        </div>
+        <div class="hero-symbol">
+            QuantFusion
+        </div>
+    </div>
+
+    <div class="market-hero-grid">
+
+        <!-- LEFT: SYSTEM PURPOSE -->
+        <div class="hero-panel">
+            <h4>What QuantFusion Does</h4>
+
+            <div class="hero-metric">
+                <span class="metric-name">Market Focus</span>
+                <span class="metric-value">Indian Equities</span>
+            </div>
+
+            <div class="hero-metric">
+                <span class="metric-name">Primary Pattern</span>
+                <span class="metric-value">VCP (Continuation)</span>
+            </div>
+
+            <div class="hero-metric">
+                <span class="metric-name">Output Type</span>
+                <span class="metric-value">Ranked Candidates</span>
+            </div>
+
+            <div class="hero-metric">
+                <span class="metric-name">Workflow</span>
+                <span class="metric-value">Research → Prioritization</span>
+            </div>
+        </div>
+
+        <!-- RIGHT: SYSTEM PHILOSOPHY -->
+        <div class="hero-panel">
+            <h4>System Philosophy</h4>
+
+            <div class="hero-gate">
+                <span class="gate-name">Signal Prediction</span>
+                <span class="pill pass">AVOIDED</span>
+            </div>
+
+            <div class="hero-gate">
+                <span class="gate-name">Structure Validation</span>
+                <span class="pill pass">REQUIRED</span>
+            </div>
+
+            <div class="hero-gate">
+                <span class="gate-name">Explainability</span>
+                <span class="pill pass">ENFORCED</span>
+            </div>
+
+            <div class="hero-gate">
+                <span class="gate-name">Institutional Bias</span>
+                <span class="pill pass">ALIGNED</span>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+
+<!-- CALL TO ACTION -->
+
+
+<section class="home-cta-terminal">
+    <a href="/dashboard" class="terminal-enter-btn">
+        <span class="enter-label">ENTER TERMINAL</span>
+        <span class="enter-sub">VCP Research Dashboard</span>
+    </a>
+</section>
+
+
+<!-- VCP STRATEGY EXPLANATION -->
+
+
+<section class="panel" style="margin-bottom: 36px;">
+    <h4>Volatility Contraction Pattern (VCP)</h4>
+
+    <div style="
+    margin: 10px 0 26px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--muted);
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid rgba(56,189,248,0.45);
+    border-radius: 6px;
+    letter-spacing: 0.4px;
+">
+        The Volatility Contraction Pattern (VCP) is a structural continuation setup observed in strong uptrending stocks as volatility compresses and selling pressure diminishes near the right edge of a base. This contraction reflects institutional absorption of supply, where price tightens without requiring aggressive upside movement.
+    </div>
+
+    <div style="
+    margin: 10px 0 26px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--muted);
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid rgba(56,189,248,0.45);
+    border-radius: 6px;
+    letter-spacing: 0.4px;
+">
+        QuantFusion does not predict breakouts or price targets. Instead, it objectively classifies whether a stock satisfies the trend, volatility, price behavior, and volume conditions required <strong>before</strong> a breakout becomes possible. VCP is treated strictly as a market structure qualification, not a trading signal.
+</div>
+</section>
+
+
+
+
+<section style="
+    margin-top: 64px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+">
+    
+
+    <div style="
+        font-family: var(--mono);
+        font-size: 18px;
+        letter-spacing: 1.1px;
+        color: var(--text);
+        margin-bottom: 8px;
+    ">
+        YASH GUPTA
+    </div>
+    <div style="
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 2.4px;
+        color: var(--muted);
+        margin-bottom: 6px;
+    ">
+        SYSTEM AUTHOR
+    </div>
+
+    <div style="
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.55;
+        color: var(--muted);
+        max-width: 100%;
+    ">
+        Python-focused developer working at the intersection of data science, machine learning, and quantitative market research, with emphasis on equities, cryptocurrency, and forex markets. My work centers on building systematic, engineering-driven frameworks for market structure analysis—where trend integrity, volatility behavior, and volume dynamics are evaluated objectively. QuantFusion reflects this philosophy by prioritizing validation, transparency, and repeatability over prediction, discretion, or narrative-based decision making.
+    </div>
+</section>
+
+
+
+
+
+{% endblock %}

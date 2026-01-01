@@ -1,0 +1,11 @@
+{
+    "start_date": "2025-10-20",
+    "end_date": "2025-12-25",
+    "holding_days": 5,
+    "total_trades": 76,
+    "win_ratio_pct": 50.0,
+    "average_return_pct": 0.17,
+    "equity_start": 0.9973,
+    "equity_end": 1.0239,
+    "total_strategy_return_pct": 2.39
+}
