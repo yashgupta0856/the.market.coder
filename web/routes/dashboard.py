@@ -36,11 +36,11 @@ def home(request: Request):
 def dashboard(request: Request):
     system_stats = get_system_stats()
     sector_cards = get_top_sectors_by_regime()
-    ranked_stocks = get_ranked_vcp_stocks(limit=20)
+    ranked_stocks = get_ranked_vcp_stocks(limit=100)
     rank1_left, rank1_right = get_rank1_stock_explanation()
-    sector_vcp_counts = get_sector_wise_vcp_counts(limit=5)
+    sector_vcp_counts = get_sector_wise_vcp_counts(limit=10)
     remaining_vcp_stocks = get_remaining_vcp_symbols()
-    rotating_sectors = get_top_rotating_sectors(limit=5)
+    rotating_sectors = get_top_rotating_sectors(limit=10)
     backtest_summary = get_backtest_summary()
 
     return templates.TemplateResponse(
