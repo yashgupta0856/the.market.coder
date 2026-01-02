@@ -1,0 +1,82 @@
+from fastapi import APIRouter, UploadFile, File, Form, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from datetime import datetime
+import os
+import shutil
+
+from web.db.database import SessionLocal
+from web.db.models import CommunityPost
+
+router = APIRouter(tags=["Community"])
+templates = Jinja2Templates(directory="web/templates")
+
+UPLOAD_DIR = "web/static/community_uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+
+# COMMUNITY PAGE
+
+
+@router.get("/community", response_class=HTMLResponse)
+def community_page(request: Request):
+    db = SessionLocal()
+    posts = (
+        db.query(CommunityPost)
+        .order_by(CommunityPost.created_at.desc())
+        .all()
+    )
+    db.close()
+
+    return templates.TemplateResponse(
+        "community.html",
+        {
+            "request": request,
+            "posts": posts
+        }
+    )
+
+
+
+# CREATE COMMUNITY POST (ADMIN)
+
+
+@router.post("/api/community/create")
+async def create_post(
+    symbol: str = Form(...),
+    entry: str = Form(None),
+    stop_loss: str = Form(None),
+    target: str = Form(None),
+    commentary: str = Form(None),
+    image: UploadFile = File(None),
+):
+    db = SessionLocal()
+
+    image_path = None
+    if image:
+        filename = f"{datetime.utcnow().timestamp()}_{image.filename}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        image_path = f"/static/community_uploads/{filename}"
+
+    post = CommunityPost(
+        symbol=symbol,
+        entry=entry,
+        stop_loss=stop_loss,
+        target=target,
+        commentary=commentary,
+        image_path=image_path,
+    )
+
+    db.add(post)
+    db.commit()
+    db.refresh(post)
+    db.close()
+
+    return {
+        "status": "success",
+        "id": post.id,
+        "symbol": symbol
+    }
