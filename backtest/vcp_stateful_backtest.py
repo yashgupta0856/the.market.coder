@@ -13,6 +13,7 @@ from indicators.trend import linear_regression_slope
 
 
 DATA_PATH = "data/processed"
+MAX_DRAWDOWN = -0.05  # 5% hard stop-loss
 
 
 def load_ohlcv():
@@ -57,16 +58,15 @@ def run_stateful_backtest():
     active_trades = {}
     closed_trades = []
 
-    # ======================================================
+    
     # PHASE A — ENTRY + TRACKING
-    # ======================================================
+    
     for ts in entry_days:
         current_date = ts.date()
         print(f"\n===== {current_date} =====")
 
         todays_vcp = []
 
-        # Detect VCP stocks
         for symbol in symbols:
             history = ohlcv[
                 (ohlcv["symbol"] == symbol) &
@@ -135,10 +135,25 @@ def run_stateful_backtest():
                 f"Return {ret:.2%}"
             )
 
+            # HARD STOP-LOSS
+            if ret <= MAX_DRAWDOWN:
+                trade["exit_date"] = current_date
+                trade["exit_close"] = close_price
+                trade["total_return"] = ret
+                trade["exit_reason"] = "STOP_LOSS"
+
+                closed_trades.append(trade)
+                to_close.append(symbol)
+
+                print(f"STOP LOSS → {symbol} | Return {ret:.2%}")
+                continue
+
+            # TIME EXIT
             if trade["days_held"] >= HOLDING_DAYS:
                 trade["exit_date"] = current_date
                 trade["exit_close"] = close_price
                 trade["total_return"] = ret
+                trade["exit_reason"] = "TIME_EXIT"
 
                 closed_trades.append(trade)
                 to_close.append(symbol)
@@ -148,9 +163,9 @@ def run_stateful_backtest():
         for symbol in to_close:
             del active_trades[symbol]
 
-    # ======================================================
+    
     # PHASE B — EXTEND ONLY EXISTING TRADES
-    # ======================================================
+    
     for ts in future_days:
         if not active_trades:
             break
@@ -181,10 +196,25 @@ def run_stateful_backtest():
                 f"Return {ret:.2%}"
             )
 
+            # HARD STOP-LOSS
+            if ret <= MAX_DRAWDOWN:
+                trade["exit_date"] = current_date
+                trade["exit_close"] = close_price
+                trade["total_return"] = ret
+                trade["exit_reason"] = "STOP_LOSS"
+
+                closed_trades.append(trade)
+                to_close.append(symbol)
+
+                print(f"STOP LOSS → {symbol} | Return {ret:.2%}")
+                continue
+
+            # TIME EXIT
             if trade["days_held"] >= HOLDING_DAYS:
                 trade["exit_date"] = current_date
                 trade["exit_close"] = close_price
                 trade["total_return"] = ret
+                trade["exit_reason"] = "TIME_EXIT"
 
                 closed_trades.append(trade)
                 to_close.append(symbol)
