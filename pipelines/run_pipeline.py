@@ -28,6 +28,10 @@ def main():
 
     print("All pipelines completed successfully")
 
+    print("Running Monte Carlo Risk Simulation")
+    from pipelines.build_monte_carlo import run_monte_carlo_pipeline
+    run_monte_carlo_pipeline()
+
 
 if __name__ == "__main__":
     main()

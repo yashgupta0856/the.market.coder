@@ -81,25 +81,21 @@
 
 <section class="rank-zone">
 
-    <!-- LEFT: SYSTEM SNAPSHOT -->
     <div class="panel snapshot-panel">
         <div class="snapshot-item">
             <span class="snapshot-label">UNIVERSE</span>
             <span class="snapshot-value">{{ system_stats.universe_size }}</span>
         </div>
-
         <div class="snapshot-item">
             <span class="snapshot-label">VCP</span>
             <span class="snapshot-value">{{ system_stats.vcp_candidates }}</span>
         </div>
-
         <div class="snapshot-item">
             <span class="snapshot-label">RANKED</span>
             <span class="snapshot-value">{{ system_stats.final_ranked }}</span>
         </div>
     </div>
 
-    <!-- RIGHT: RANKED OUTPUT -->
     <div class="panel rank-panel">
         <div class="rank-header">
             RANKED VCP STOCKS
@@ -112,6 +108,7 @@
                     <th>RANK</th>
                     <th>SYMBOL</th>
                     <th>CMP</th>
+                    <th>Risk Simulator</th>
                 </tr>
             </thead>
             <tbody>
@@ -120,6 +117,12 @@
                     <td>{{ s.rank }}</td>
                     <td class="rank-symbol">{{ s.symbol }}</td>
                     <td>{{ "%.2f"|format(s.close) }}</td>
+                    <td>
+                        <button class="risk-btn"
+                                onclick="openMonteCarlo('{{ s.symbol }}')">
+                            View
+                        </button>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -127,6 +130,44 @@
     </div>
 
 </section>
+
+
+
+<!-- MONTE CARLO MODAL -->
+
+
+<div id="mc-modal" class="mc-modal hidden">
+    <div class="mc-content">
+        <div class="mc-header">
+            <span id="mc-title">Monte Carlo Risk Simulation (5 Days)</span>
+            <span class="mc-close" onclick="closeMonteCarlo()">×</span>
+        </div>
+
+        <div class="mc-symbol" id="mc-symbol"></div>
+
+        <table class="mc-table">
+            <tr>
+                <td>Expected Return</td>
+                <td id="mc-exp"></td>
+            </tr>
+            <tr>
+                <td>Probability of Loss</td>
+                <td id="mc-loss"></td>
+            </tr>
+            <tr>
+                <td>Probability of +5% Gain</td>
+                <td id="mc-gain"></td>
+            </tr>
+            <tr>
+                <td>Worst 5% Outcome</td>
+                <td id="mc-worst"></td>
+            </tr>
+        </table>
+        <div style="margin-top:16px;"><canvas id="mcChart" height="160"></canvas></div>
+    </div>
+</div>
+
+
 
 
 <!-- ZONE 1: DOMINANT MARKET CONTEXT (PRIMARY DECISION LAYER) -->
@@ -201,6 +242,7 @@
         {% endfor %}
     </div>
 </section>
+
 
 
 
@@ -306,5 +348,150 @@
 {% endif %}
 
 
+<!-- INLINE STYLES (MONTE CARLO) -->
+
+
+<style>
+.risk-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: rgba(56,189,248,0.12);
+    color: var(--accent);
+    cursor: pointer;
+}
+.risk-btn:hover {
+    background: rgba(56,189,248,0.25);
+}
+
+.mc-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.mc-modal.hidden {
+    display: none;
+}
+
+.mc-content {
+    background: #020617;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 420px;
+    padding: 18px 20px;
+    font-family: var(--mono);
+}
+
+.mc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.mc-close {
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--muted);
+}
+
+.mc-symbol {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+
+.mc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.mc-table td {
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 13px;
+}
+.mc-table td:last-child {
+    text-align: right;
+    font-weight: 600;
+}
+</style>
+<script>
+let mcChart = null;
+
+async function openMonteCarlo(symbol) {
+    document.getElementById("mc-modal").classList.remove("hidden");
+    document.getElementById("mc-symbol").innerText = "Symbol: " + symbol;
+
+    const res = await fetch(`/api/monte-carlo/${symbol}`);
+    const data = await res.json();
+
+    if (!data || data.status !== "success") {
+        return;
+    }
+
+    const m = data.metrics;
+
+    document.getElementById("mc-exp").innerText =
+        (m.expected_return_pct >= 0 ? "+" : "") + m.expected_return_pct + "%";
+    document.getElementById("mc-loss").innerText =
+        m.probability_of_loss_pct + "%";
+    document.getElementById("mc-gain").innerText =
+        m.probability_of_5pct_gain_pct + "%";
+    document.getElementById("mc-worst").innerText =
+        m.worst_5pct_outcome_pct + "%";
+
+    renderMonteCarloChart(data.paths);
+}
+
+function renderMonteCarloChart(paths) {
+    const ctx = document.getElementById("mcChart").getContext("2d");
+
+    if (mcChart) {
+        mcChart.destroy();
+    }
+
+    const datasets = paths.slice(0, 20).map((p, idx) => ({
+        label: `Sim ${idx+1}`,
+        data: p,
+        borderColor: "rgba(56,189,248,0.15)",
+        borderWidth: 1,
+        pointRadius: 0,
+        fill: false
+    }));
+
+    mcChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: paths[0].map((_, i) => `Day ${i}`),
+            datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { display: false },
+                y: {
+                    ticks: {
+                        callback: v => v.toFixed(2)
+                    }
+                }
+            }
+        }
+    });
+}
+
+function closeMonteCarlo() {
+    document.getElementById("mc-modal").classList.add("hidden");
+}
+</script>
 
 {% endblock %}

@@ -13,14 +13,13 @@ from web.services.stock_service import (
 from web.services.explainability_service import get_rank1_stock_explanation
 from web.services.sector_rotation_service import get_top_rotating_sectors
 from web.services.backtest_service import get_backtest_summary
+from web.services.monte_carlo_service import get_monte_carlo_for_symbol
 
 router = APIRouter()
 templates = Jinja2Templates(directory="web/templates")
 
 
-
 # Homepage
-
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return templates.TemplateResponse(
@@ -29,9 +28,7 @@ def home(request: Request):
     )
 
 
-
 # Dashboard
-
 @router.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
     system_stats = get_system_stats()
@@ -42,6 +39,10 @@ def dashboard(request: Request):
     remaining_vcp_stocks = get_remaining_vcp_symbols()
     rotating_sectors = get_top_rotating_sectors(limit=10)
     backtest_summary = get_backtest_summary()
+
+    mc_data = None
+    if rank1_left:
+        mc_data = get_monte_carlo_for_symbol(rank1_left["symbol"])
 
     return templates.TemplateResponse(
         "dashboard.html",
@@ -54,7 +55,8 @@ def dashboard(request: Request):
             "rank1_right": rank1_right,
             "sector_vcp_counts": sector_vcp_counts,
             "remaining_vcp_stocks": remaining_vcp_stocks,
-            "rotating_sectors":rotating_sectors,
-            "backtest_summary": backtest_summary
+            "rotating_sectors": rotating_sectors,
+            "backtest_summary": backtest_summary,
+            "mc_data": mc_data,   
         }
     )
