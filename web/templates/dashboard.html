@@ -1,9 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-
 <!-- ZONE 2: SECTOR INTELLIGENCE (RELATIVE STRENGTH REGIMES) -->
-
 
 <section class="sector-row">
     {% for title, key in [
@@ -24,60 +22,43 @@
         </ul>
     </div>
     {% endfor %}
-    <div class="panel sector-card">
-    <h4>Sector-wise Counts</h4>
 
-    {% if sector_vcp_counts %}
+    <div class="panel sector-card">
+        <h4>Sector-wise Counts</h4>
+        {% if sector_vcp_counts %}
         <ul>
             {% for row in sector_vcp_counts %}
-                <li>
-                    {{ row.sector_index }}
-                    <span>{{ row.vcp_count }}</span>
-                </li>
+            <li>
+                {{ row.sector_index }}
+                <span>{{ row.vcp_count }}</span>
+            </li>
             {% endfor %}
         </ul>
-    {% else %}
+        {% else %}
         <p class="muted">No VCP stocks</p>
-    {% endif %}
-</div>
-
+        {% endif %}
+    </div>
 </section>
 
-
-
-
-
-
-<!-- SECTOR ROTATION (CAPITAL-WEIGHTED LEADERSHIP ORDER) -->
-
+<!-- SECTOR ROTATION -->
 
 <section class="panel rotation-panel">
     <div class="rotation-header">
         SECTOR ROTATION — CAPITAL WEIGHTED
-        <span class="rotation-sub">
-            (Rank #1 = Strongest capital leadership)
-        </span>
+        <span class="rotation-sub">(Rank #1 = Strongest capital leadership)</span>
     </div>
 
     <div class="rotation-grid">
         {% for row in rotating_sectors %}
         <div class="rotation-item">
             <span class="rotation-sector">{{ row.sector_index }}</span>
-            <span class="rotation-rank">
-                #{{ row.rotation_rank }}
-            </span>
+            <span class="rotation-rank">#{{ row.rotation_rank }}</span>
         </div>
         {% endfor %}
     </div>
 </section>
 
-
-
-
-
-
-<!-- ZONE 3: RANKING & SYSTEM SNAPSHOT (ACTIONABLE OUTPUT) -->
-
+<!-- ZONE 3: RANKING & SNAPSHOT -->
 
 <section class="rank-zone">
 
@@ -131,10 +112,7 @@
 
 </section>
 
-
-
 <!-- MONTE CARLO MODAL -->
-
 
 <div id="mc-modal" class="mc-modal hidden">
     <div class="mc-content">
@@ -163,36 +141,29 @@
                 <td id="mc-worst"></td>
             </tr>
         </table>
-        <div style="margin-top:16px;"><canvas id="mcChart" height="160"></canvas></div>
+
+        <div style="margin-top:16px;">
+            <canvas id="mcChart" height="160"></canvas>
+        </div>
     </div>
 </div>
 
-
-
-
-<!-- ZONE 1: DOMINANT MARKET CONTEXT (PRIMARY DECISION LAYER) -->
-
+<!-- ZONE 1: PRIMARY MARKET CONTEXT -->
 
 <section class="market-hero">
 
-    <!-- Context Header -->
     <div class="market-hero-header">
-        <div class="hero-title">
-            PRIMARY MARKET CONTEXT
-        </div>
+        <div class="hero-title">PRIMARY MARKET CONTEXT</div>
         <div class="hero-symbol">
             {{ rank1_left.symbol if rank1_left else "—" }}
             <span class="hero-rank">#1</span>
         </div>
     </div>
 
-    <!-- Context Body -->
     <div class="market-hero-grid">
 
-        <!-- LEFT: MODEL CONVICTION (NUMERICAL STRENGTH) -->
         <div class="hero-panel">
             <h4>Model Conviction</h4>
-
             {% for label, value in [
                 ("Trend Strength", rank1_left.trend_strength),
                 ("Momentum", rank1_left.momentum),
@@ -205,10 +176,8 @@
             {% endfor %}
         </div>
 
-        <!-- RIGHT: STRUCTURAL VALIDATION (BINARY GATES) -->
         <div class="hero-panel">
             <h4>Structural Validation</h4>
-
             {% for gate in [
                 ("Trend Gate", rank1_right.trend_gate),
                 ("Volatility Gate", rank1_right.volatility_gate),
@@ -225,10 +194,7 @@
     </div>
 </section>
 
-
-
-<!-- ZONE 4: RESIDUAL VCP CANDIDATES (PASSED, NOT PRIORITIZED) -->
-
+<!-- ZONE 4: OTHER VCP STOCKS -->
 
 <section class="panel residual-panel">
     <div class="residual-header">
@@ -238,50 +204,33 @@
 
     <div class="symbol-grid">
         {% for sym in remaining_vcp_stocks %}
-            <div class="symbol-pill">{{ sym }}</div>
+        <div class="symbol-pill">{{ sym }}</div>
         {% endfor %}
     </div>
 </section>
 
-
-
-
-
+<!-- BACKTEST SECTION -->
 
 {% if backtest_summary %}
 <section class="market-hero panel residual-panel">
 
-    <!-- Header -->
-    <!-- <div class="market-hero-header"> -->
-        <!-- <div class="hero-title">
-            SYSTEM VALIDATION
-        </div> -->
-        <!-- <div class="hero-symbol">
-            BACKTEST
-            <span class="hero-rank">Quant Fusion Results</span>
-        </div> -->
-    <!-- </div> -->
+    <div style="
+        margin: 10px 0 26px;
+        padding: 10px 14px;
+        font-family: var(--mono);
+        font-size: 11px;
+        line-height: 1.5;
+        color: var(--muted);
+        background: rgba(255,255,255,0.03);
+        border-left: 3px solid rgba(56,189,248,0.45);
+        border-radius: 6px;
+        letter-spacing: 0.4px;
+    ">
+        <strong>SYSTEM NOTE</strong> — Backtest outcomes are dependent on the market regime observed during the evaluation period and should not be interpreted in isolation.
+    </div>
 
-      <div style="
-    margin: 10px 0 26px;
-    padding: 10px 14px;
-    font-family: var(--mono);
-    font-size: 11px;
-    line-height: 1.5;
-    color: var(--muted);
-    background: rgba(255,255,255,0.03);
-    border-left: 3px solid rgba(56,189,248,0.45);
-    border-radius: 6px;
-    letter-spacing: 0.4px;
-">
-    <strong>SYSTEM NOTE</strong> — Backtest outcomes are dependent on the market regime observed during the evaluation period and should not be interpreted in isolation.
-</div>
-
-
-    <!-- Body -->
     <div class="market-hero-grid">
 
-        <!-- LEFT: BACKTEST PERFORMANCE -->
         <div class="hero-panel">
             <h4>Backtest Performance</h4>
 
@@ -310,7 +259,6 @@
             </div>
         </div>
 
-        <!-- RIGHT: RETURN STATISTICS -->
         <div class="hero-panel">
             <h4>Return Statistics</h4>
 
@@ -347,81 +295,6 @@
 </section>
 {% endif %}
 
-
-<!-- INLINE STYLES (MONTE CARLO) -->
-
-
-<style>
-.risk-btn {
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: rgba(56,189,248,0.12);
-    color: var(--accent);
-    cursor: pointer;
-}
-.risk-btn:hover {
-    background: rgba(56,189,248,0.25);
-}
-
-.mc-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.65);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-.mc-modal.hidden {
-    display: none;
-}
-
-.mc-content {
-    background: #020617;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    width: 420px;
-    padding: 18px 20px;
-    font-family: var(--mono);
-}
-
-.mc-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-    margin-bottom: 10px;
-}
-
-.mc-close {
-    cursor: pointer;
-    font-size: 18px;
-    color: var(--muted);
-}
-
-.mc-symbol {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 12px;
-}
-
-.mc-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-.mc-table td {
-    padding: 8px 0;
-    border-bottom: 1px dashed var(--border);
-    font-size: 13px;
-}
-.mc-table td:last-child {
-    text-align: right;
-    font-weight: 600;
-}
-</style>
 <script>
 let mcChart = null;
 
@@ -431,13 +304,9 @@ async function openMonteCarlo(symbol) {
 
     const res = await fetch(`/api/monte-carlo/${symbol}`);
     const data = await res.json();
-
-    if (!data || data.status !== "success") {
-        return;
-    }
+    if (!data || data.status !== "success") return;
 
     const m = data.metrics;
-
     document.getElementById("mc-exp").innerText =
         (m.expected_return_pct >= 0 ? "+" : "") + m.expected_return_pct + "%";
     document.getElementById("mc-loss").innerText =
@@ -452,15 +321,10 @@ async function openMonteCarlo(symbol) {
 
 function renderMonteCarloChart(paths) {
     const ctx = document.getElementById("mcChart").getContext("2d");
-
-    if (mcChart) {
-        mcChart.destroy();
-    }
+    if (mcChart) mcChart.destroy();
 
     const datasets = paths.slice(0, 20).map((p, idx) => ({
-        label: `Sim ${idx+1}`,
         data: p,
-        borderColor: "rgba(56,189,248,0.15)",
         borderWidth: 1,
         pointRadius: 0,
         fill: false
@@ -473,18 +337,8 @@ function renderMonteCarloChart(paths) {
             datasets
         },
         options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: { display: false },
-                y: {
-                    ticks: {
-                        callback: v => v.toFixed(2)
-                    }
-                }
-            }
+            plugins: { legend: { display: false } },
+            scales: { x: { display: false } }
         }
     });
 }

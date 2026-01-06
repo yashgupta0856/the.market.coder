@@ -1,9 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-
 <!-- HOME: TERMINAL ENTRY HERO -->
-
 
 <section class="market-hero">
 
@@ -71,10 +69,7 @@
     </div>
 </section>
 
-
-
 <!-- CALL TO ACTION -->
-
 
 <section class="home-cta-terminal">
     <a href="/dashboard" class="terminal-enter-btn">
@@ -83,86 +78,36 @@
     </a>
 </section>
 
-
 <!-- VCP STRATEGY EXPLANATION -->
 
-
-<section class="panel" style="margin-bottom: 36px;">
+<section class="panel vcp-section">
     <h4>Volatility Contraction Pattern (VCP)</h4>
 
-    <div style="
-    margin: 10px 0 26px;
-    padding: 10px 14px;
-    font-family: var(--mono);
-    font-size: 15px;
-    line-height: 1.5;
-    color: var(--muted);
-    background: rgba(255,255,255,0.03);
-    border-left: 3px solid rgba(56,189,248,0.45);
-    border-radius: 6px;
-    letter-spacing: 0.4px;
-">
+    <div class="vcp-note">
         The Volatility Contraction Pattern (VCP) is a structural continuation setup observed in strong uptrending stocks as volatility compresses and selling pressure diminishes near the right edge of a base. This contraction reflects institutional absorption of supply, where price tightens without requiring aggressive upside movement.
     </div>
 
-    <div style="
-    margin: 10px 0 26px;
-    padding: 10px 14px;
-    font-family: var(--mono);
-    font-size: 15px;
-    line-height: 1.5;
-    color: var(--muted);
-    background: rgba(255,255,255,0.03);
-    border-left: 3px solid rgba(56,189,248,0.45);
-    border-radius: 6px;
-    letter-spacing: 0.4px;
-">
+    <div class="vcp-note">
         QuantFusion does not predict breakouts or price targets. Instead, it objectively classifies whether a stock satisfies the trend, volatility, price behavior, and volume conditions required <strong>before</strong> a breakout becomes possible. VCP is treated strictly as a market structure qualification, not a trading signal.
-</div>
+    </div>
 </section>
 
+<!-- DEVELOPER / AUTHOR SECTION -->
 
+<section class="author-section">
 
-
-<section style="
-    margin-top: 64px;
-    padding-top: 18px;
-    border-top: 1px solid rgba(255,255,255,0.05);
-">
-    
-
-    <div style="
-        font-family: var(--mono);
-        font-size: 18px;
-        letter-spacing: 1.1px;
-        color: var(--text);
-        margin-bottom: 8px;
-    ">
+    <div class="author-name">
         YASH GUPTA
     </div>
-    <div style="
-        font-family: var(--mono);
-        font-size: 10px;
-        letter-spacing: 2.4px;
-        color: var(--muted);
-        margin-bottom: 6px;
-    ">
-        SYSTEM AUTHOR
+
+    <div class="author-role">
+        SYSTEM DEVELOPER
     </div>
 
-    <div style="
-        font-family: var(--mono);
-        font-size: 12px;
-        line-height: 1.55;
-        color: var(--muted);
-        max-width: 100%;
-    ">
+    <div class="author-description">
         Python-focused developer working at the intersection of data science, machine learning, and quantitative market research, with emphasis on equities, cryptocurrency, and forex markets. My work centers on building systematic, engineering-driven frameworks for market structure analysis—where trend integrity, volatility behavior, and volume dynamics are evaluated objectively. QuantFusion reflects this philosophy by prioritizing validation, transparency, and repeatability over prediction, discretion, or narrative-based decision making.
     </div>
+
 </section>
-
-
-
-
 
 {% endblock %}

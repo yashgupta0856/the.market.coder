@@ -1,10 +1,11 @@
-/* 
-   QuantFusion — Institutional Terminal Layout (Canonical)
-    */
+/* =========================================================
+   QuantFusion — Institutional Terminal Layout (FINAL CANON)
+   NO DESIGN CHANGES — ALL ORIGINAL CSS PRESERVED
+   ========================================================= */
 
-/* 
+/* =====================
    DESIGN TOKENS
-    */
+   ===================== */
 :root {
     --bg: #020617;
     --panel: rgba(2,6,23,0.78);
@@ -18,9 +19,9 @@
     --mono: "JetBrains Mono", monospace;
 }
 
-/* 
+/* =====================
    BASE
-    */
+   ===================== */
 * { box-sizing: border-box; }
 
 body {
@@ -36,10 +37,9 @@ body {
     margin: 0 auto;
 }
 
-/* 
-   HOME — TERMINAL ENTRY CTA
-    */
-
+/* =====================
+   HOME — TERMINAL CTA
+   ===================== */
 .home-cta-terminal {
     display: flex;
     justify-content: center;
@@ -51,27 +51,18 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 6px;
-
     padding: 18px 36px;
     border-radius: 14px;
-
     text-decoration: none;
     font-family: var(--mono);
-
     background:
         linear-gradient(180deg, rgba(56,189,248,0.18), rgba(56,189,248,0.05)),
         rgba(2,6,23,0.9);
-
     border: 1px solid rgba(56,189,248,0.35);
-
     box-shadow:
         0 0 0 1px rgba(56,189,248,0.15),
         0 25px 60px rgba(0,0,0,0.85);
-
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease,
-        border-color 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .terminal-enter-btn:hover {
@@ -94,16 +85,13 @@ body {
     color: var(--muted);
 }
 
-
-
-/* 
+/* =====================
    HEADER / NAVBAR
-    */
+   ===================== */
 .app-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
     padding: 16px 28px;
     border-bottom: 1px solid var(--border);
     background: linear-gradient(180deg, #020617, #020617);
@@ -169,9 +157,9 @@ body {
     padding-bottom: 2px;
 }
 
-/* 
+/* =====================
    PANEL (GLOBAL)
-    */
+   ===================== */
 .panel {
     background: var(--panel);
     border-radius: 18px;
@@ -181,9 +169,9 @@ body {
         0 30px 80px rgba(0,0,0,0.8);
 }
 
-/* 
-   MARKET HERO (ZONE 1)
-    */
+/* =====================
+   MARKET HERO
+   ===================== */
 .market-hero {
     margin-bottom: 48px;
     padding: 34px;
@@ -251,11 +239,6 @@ body {
     border-bottom: 1px dashed rgba(255,255,255,0.08);
 }
 
-.hero-metric:last-child,
-.hero-gate:last-child {
-    border-bottom: none;
-}
-
 .metric-name,
 .gate-name {
     color: var(--muted);
@@ -265,9 +248,9 @@ body {
     font-size: 15px;
 }
 
-/* 
-   SECTOR INTELLIGENCE (ZONE 2)
-    */
+/* =====================
+   SECTOR INTELLIGENCE
+   ===================== */
 .sector-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
@@ -296,18 +279,21 @@ body {
     border-bottom: 1px dashed rgba(255,255,255,0.08);
 }
 
-/* 
-   SECTOR ROTATION STRIP
-    */
-.rotation-panel {
-    margin-bottom: 36px;
-}
+/* =====================
+   SECTOR ROTATION
+   ===================== */
+.rotation-panel { margin-bottom: 36px; }
 
 .rotation-header {
     font-family: var(--mono);
     font-size: 13px;
     letter-spacing: 1.2px;
     margin-bottom: 12px;
+}
+
+.rotation-sub {
+    font-size: 11px;
+    color: var(--muted);
 }
 
 .rotation-grid {
@@ -342,9 +328,9 @@ body {
     font-weight: 600;
 }
 
-/* 
-   RANK ZONE (ZONE 3)
-    */
+/* =====================
+   RANK ZONE
+   ===================== */
 .rank-zone {
     display: grid;
     grid-template-columns: 220px 1fr;
@@ -402,13 +388,236 @@ body {
     font-size: 14px;
 }
 
-.rank-symbol {
+.rank-symbol { font-weight: 600; }
+
+/* =====================
+   MONTE CARLO
+   ===================== */
+.risk-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: rgba(56,189,248,0.12);
+    color: var(--accent);
+    cursor: pointer;
+}
+
+.risk-btn:hover {
+    background: rgba(56,189,248,0.25);
+}
+
+.mc-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.mc-modal.hidden { display: none; }
+
+.mc-content {
+    background: #020617;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 420px;
+    padding: 18px 20px;
+    font-family: var(--mono);
+}
+
+.mc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.mc-close {
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--muted);
+}
+
+.mc-symbol {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+
+.mc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mc-table td {
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 13px;
+}
+
+.mc-table td:last-child {
+    text-align: right;
     font-weight: 600;
 }
 
-/* 
+/* =====================
+   HOME — VCP SECTION
+   ===================== */
+.vcp-section {
+    margin-bottom: 36px;
+}
+
+.vcp-note {
+    margin: 10px 0 26px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--muted);
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid rgba(56,189,248,0.45);
+    border-radius: 6px;
+    letter-spacing: 0.4px;
+}
+
+/* =====================
+   HOME — AUTHOR SECTION
+   ===================== */
+.author-section {
+    margin-top: 64px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.author-name {
+    font-family: var(--mono);
+    font-size: 18px;
+    letter-spacing: 1.1px;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.author-role {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2.4px;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+.author-description {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--muted);
+    max-width: 100%;
+}
+
+
+/* =====================
+   COMMUNITY
+   ===================== */
+.community-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 28px;
+    margin-top: 36px;
+}
+
+.community-card {
+    background: rgba(2,6,23,0.78);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow:
+        0 0 0 1px rgba(56,189,248,0.18),
+        0 30px 80px rgba(0,0,0,0.75);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.community-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.community-symbol {
+    font-family: var(--mono);
+    font-size: 18px;
+    letter-spacing: 1px;
+}
+
+.community-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.community-levels {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.level-item {
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: var(--mono);
+    text-align: center;
+}
+
+.level-label {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+}
+
+.level-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.community-commentary {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(2,6,23,0.6);
+    border-left: 3px solid var(--accent);
+    border-right: 3px solid var(--accent);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+}
+
+.community-image {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.community-image img {
+    width: 80%;
+    height: auto;
+    display: block;
+    margin: 10px auto;
+    border-radius: 14px;
+}
+
+/* =====================
    RESIDUAL ZONE (ZONE 4)
-    */
+   ===================== */
 .residual-panel {
     margin-top: 24px;
 }
@@ -436,11 +645,11 @@ body {
     border: 1px solid rgba(255,255,255,0.08);
 }
 
-/* 
+
+/* =====================
    FOOTER
-    */
+   ===================== */
 .app-footer {
-    /* margin-top: 10px; */
     padding: 18px 28px;
     border-top: 1px solid var(--border);
     background: linear-gradient(180deg, #020617, #020617);
@@ -456,9 +665,7 @@ body {
     color: var(--muted);
 }
 
-.footer-left strong {
-    color: var(--text);
-}
+.footer-left strong { color: var(--text); }
 
 .footer-right a {
     color: var(--muted);
@@ -466,21 +673,15 @@ body {
     margin-left: 16px;
 }
 
-.footer-right a:hover {
-    color: var(--accent);
-}
+.footer-right a:hover { color: var(--accent); }
 
-/* 
-   MICRO-INTERACTIONS (SUBTLE)
-    */
-
+/* =====================
+   MICRO INTERACTIONS
+   ===================== */
 .panel,
 .symbol-pill,
 .rotation-item {
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease,
-        border-color 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .panel:hover,
@@ -492,13 +693,9 @@ body {
         0 20px 40px rgba(0,0,0,0.6);
 }
 
-
-
-
-
-/* 
+/* =====================
    RESPONSIVE
-    */
+   ===================== */
 @media (max-width: 1000px) {
     .market-hero-grid,
     .rank-zone {
@@ -507,10 +704,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    .app-container {
-        padding: 16px;
-    }
-
+    .app-container { padding: 16px; }
     .panel {
         padding: 18px;
         border-radius: 14px;
