@@ -100,8 +100,8 @@ def price_tightness_gate(symbol_df, lookback=15):
     return True
 
 
-
-def volume_dryup_gate(symbol_df, recent_window=15, prior_window=30):
+# more strict version
+'''def volume_dryup_gate(symbol_df, recent_window=15, prior_window=30):
     required_cols = ["volume", "close"]
 
     for col in required_cols:
@@ -130,9 +130,51 @@ def volume_dryup_gate(symbol_df, recent_window=15, prior_window=30):
     if (down_days & high_volume).any():
         return False
 
+    return True'''
+
+def volume_dryup_gate(
+    symbol_df,
+    recent_window=15,
+    prior_window=30,
+    max_vol_expansion=1.20,        # allow up to +20%
+    max_distribution_ratio=0.25    # allow up to 25% dist days
+):
+    required_cols = ["volume", "close"]
+
+    for col in required_cols:
+        if col not in symbol_df.columns:
+            raise ValueError(f"Missing required column: {col}")
+
+    if len(symbol_df) < recent_window + prior_window:
+        return False
+
+    recent = symbol_df.iloc[-recent_window:]
+    prior = symbol_df.iloc[-(recent_window + prior_window):-recent_window]
+
+    avg_vol_recent = recent["volume"].mean()
+    avg_vol_prior = prior["volume"].mean()
+
+    
+    # RULE VU1 — Controlled contraction
+    
+    if avg_vol_recent > max_vol_expansion * avg_vol_prior:
+        return False
+
+    
+    # RULE VU2 — Limited distribution
+    
+    prev_close = recent["close"].shift(1)
+
+    down_days = recent["close"] < prev_close
+    high_volume = recent["volume"] > (1.4 * avg_vol_recent)
+
+    distribution_days = (down_days & high_volume).sum()
+    distribution_ratio = distribution_days / recent_window
+
+    if distribution_ratio > max_distribution_ratio:
+        return False
+
     return True
-
-
 
 
 
