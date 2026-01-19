@@ -1,11 +1,26 @@
-import pandas as pd
-from pathlib import Path
+from utils.mongo import get_collection
 
-ROTATION_PATH = "data/processed/sector_rotation.csv"
 
 def get_top_rotating_sectors(limit=10):
-    if not Path(ROTATION_PATH).exists():
-        return []
+    """
+    Fetch top rotating sectors ordered by rotation_rank (ascending).
+    Reads ONLY from MongoDB.
+    """
 
-    df = pd.read_csv(ROTATION_PATH)
-    return df.sort_values("rotation_rank").head(limit).to_dict(orient="records")
+    collection = get_collection("sector_rotation")
+
+    cursor = (
+        collection
+        .find(
+            {},
+            {
+                "_id": 0,
+                "sector_index": 1,
+                "rotation_rank": 1
+            }
+        )
+        .sort("rotation_rank", 1)
+        .limit(limit)
+    )
+
+    return list(cursor)

@@ -1,41 +1,32 @@
-from pathlib import Path
 from datetime import datetime
-import pandas as pd
-
-
-UNIVERSE_PATH = "data/processed/equity_universe.csv"
-VCP_PATH = "data/processed/vcp_candidates.csv"
-FINAL_OUTPUT_PATH = "output/final_stock_scores.csv"
+from utils.mongo import get_collection
 
 
 def get_system_stats():
     stats = {}
 
     # Universe size
-    if Path(UNIVERSE_PATH).exists():
-        universe_df = pd.read_csv(UNIVERSE_PATH)
-        stats["universe_size"] = len(universe_df)
-    else:
-        stats["universe_size"] = 0
+    universe_col = get_collection("equity_universe")
+    stats["universe_size"] = universe_col.count_documents({})
 
     # VCP candidates
-    if Path(VCP_PATH).exists():
-        vcp_df = pd.read_csv(VCP_PATH,usecols=['vcp_candidate'])
-        stats["vcp_candidates"] = len(vcp_df[vcp_df["vcp_candidate"] == True])
-    else:
-        stats["vcp_candidates"] = 0
+    vcp_col = get_collection("vcp_candidates")
+    stats["vcp_candidates"] = vcp_col.count_documents(
+        {"vcp_candidate": True}
+    )
 
     # Final ranked stocks
-    if Path(FINAL_OUTPUT_PATH).exists():
-        ranked_df = pd.read_csv(FINAL_OUTPUT_PATH)
-        stats["final_ranked"] = len(ranked_df)
+    final_col = get_collection("final_stock_scores")
+    stats["final_ranked"] = final_col.count_documents({})
 
-        last_modified = Path(FINAL_OUTPUT_PATH).stat().st_mtime
-        stats["last_run"] = datetime.fromtimestamp(last_modified).strftime(
-            "%Y-%m-%d %H:%M IST"
+    # Last run timestamp (based on latest document insertion)
+    last_doc = final_col.find_one(sort=[("_id", -1)])
+
+    if last_doc:
+        stats["last_run"] = datetime.utcnow().strftime(
+            "%Y-%m-%d %H:%M UTC"
         )
     else:
-        stats["final_ranked"] = 0
         stats["last_run"] = "N/A"
 
     return stats

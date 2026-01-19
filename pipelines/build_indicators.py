@@ -5,8 +5,10 @@ from indicators.momentum import roc
 from indicators.volatility import true_range, atr, rolling_std, range_compression
 from indicators.trend import linear_regression_slope
 
+from utils.mongo import get_collection
+from utils.mongo_loader import csv_to_mongo
 
-INPUT_PATH = "data/processed/ohlcv_equities.csv"
+
 OUTPUT_PATH = "data/processed/indicators/equity_indicators.csv"
 
 
@@ -42,7 +44,10 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def run_phase2():
-    ohlcv = pd.read_csv(INPUT_PATH, parse_dates=["date"])
+    # READ FROM MONGODB
+    col = get_collection("ohlcv_equities")
+    ohlcv = pd.DataFrame(list(col.find({}, {"_id": 0})))
+    ohlcv["date"] = pd.to_datetime(ohlcv["date"])
 
     indicator_frames = []
 
@@ -52,7 +57,14 @@ def run_phase2():
 
     final_df = pd.concat(indicator_frames, ignore_index=True)
 
+    # WRITE CSV (temporary)
     final_df.to_csv(OUTPUT_PATH, index=False)
+
+    # WRITE MONGODB
+    csv_to_mongo(
+        OUTPUT_PATH,
+        "equity_indicators"
+    )
 
 
 if __name__ == "__main__":

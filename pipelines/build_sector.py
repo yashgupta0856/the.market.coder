@@ -15,6 +15,7 @@ from sectors.sector_regime import classify_sector_regimes
 from sectors.build_benchmarks_indicators import run_benchmark_pipeline
 
 from configs.data_sources import DEFAULT_START_DATE
+from utils.mongo_loader import csv_to_mongo
 
 
 # CONFIG
@@ -32,9 +33,7 @@ SECTOR_REGIME_PATH     = "data/processed/sector_regime.csv"
 BENCHMARK_PATH         = "data/processed/benchmark_indicators.csv"
 
 
-
 # PHASE 4.2 — Sector Indicators
-
 
 def run_phase4_2():
     frames = []
@@ -47,12 +46,15 @@ def run_phase4_2():
     final_df = pd.concat(frames, ignore_index=True)
     final_df.to_csv(SECTOR_INDICATORS_PATH, index=False)
 
+    csv_to_mongo(
+        SECTOR_INDICATORS_PATH,
+        "sector_indicators"
+    )
+
     return final_df
 
 
-
 # PHASE 4.3 — Sector Strength
-
 
 def run_phase4_3():
     sector_latest, benchmark_latest = load_sector_and_benchmark(
@@ -64,12 +66,16 @@ def run_phase4_3():
     rs_final = normalize_and_score(rs_raw)
 
     rs_final.to_csv(SECTOR_STRENGTH_PATH, index=False)
+
+    csv_to_mongo(
+        SECTOR_STRENGTH_PATH,
+        "sector_strength"
+    )
+
     return rs_final
 
 
-
 # PHASE 4 — MASTER PIPELINE
-
 
 def run_phase4():
     print("Running Benchmark Indicator Pipeline")
@@ -84,6 +90,11 @@ def run_phase4():
     print("Running Phase 4.4 — Sector Regime Classification")
     regime_df = classify_sector_regimes(rs_df)
     regime_df.to_csv(SECTOR_REGIME_PATH, index=False)
+
+    csv_to_mongo(
+        SECTOR_REGIME_PATH,
+        "sector_regime"
+    )
 
     print("Phase 4 completed successfully")
 

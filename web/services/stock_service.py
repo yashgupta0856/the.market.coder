@@ -1,86 +1,64 @@
-import pandas as pd
-from pathlib import Path
-
-
-
-FINAL_STOCKS_PATH = "output/final_stock_scores.csv"
-VCP_CANDIDATES_PATH = "data/processed/vcp_candidates.csv"
+from utils.mongo import get_collection
 
 
 def get_ranked_vcp_stocks(limit=20):
-    if not Path(FINAL_STOCKS_PATH).exists():
-        return []
+    col = get_collection("final_stock_scores")
 
-    df = pd.read_csv(FINAL_STOCKS_PATH)
+    cursor = (
+        col.find(
+            {},
+            {"_id": 0, "symbol": 1, "close": 1, "rank": 1}
+        )
+        .sort("rank", 1)
+        .limit(limit)
+    )
 
-    # Defensive checks
-    required_cols = {"symbol", "rank", "close"}
-    if not required_cols.issubset(df.columns):
-        return []
-
-    df = df.sort_values("rank").head(limit)
-
-    return df[["symbol", "close", "rank"]].to_dict(orient="records")
-
-
-
+    return list(cursor)
 
 
 def get_sector_wise_vcp_counts(limit=5):
-    if not Path(FINAL_STOCKS_PATH).exists():
-        return []
+    col = get_collection("final_stock_scores")
 
-    df = pd.read_csv(FINAL_STOCKS_PATH)
+    pipeline = [
+        {"$match": {"vcp_candidate": True}},
+        {
+            "$group": {
+                "_id": "$sector_index",
+                "vcp_count": {"$sum": 1}
+            }
+        },
+        {"$sort": {"vcp_count": -1}},
+        {"$limit": limit},
+        {
+            "$project": {
+                "_id": 0,
+                "sector_index": "$_id",
+                "vcp_count": 1
+            }
+        }
+    ]
 
-    required = {"sector_index", "vcp_candidate"}
-    if not required.issubset(df.columns):
-        return []
-
-    vcp_df = df[df["vcp_candidate"] == True]
-
-    counts = (
-        vcp_df.groupby("sector_index")
-        .size()
-        .reset_index(name="vcp_count")
-        .sort_values("vcp_count", ascending=False)
-        .head(limit)
-    )
-
-    return counts.to_dict(orient="records")
-
-
-
-
-
-
+    return list(col.aggregate(pipeline))
 
 
 def get_remaining_vcp_symbols():
-    if not Path(VCP_CANDIDATES_PATH).exists() or not Path(FINAL_STOCKS_PATH).exists():
-        return []
+    vcp_col = get_collection("vcp_candidates")
+    final_col = get_collection("final_stock_scores")
 
-    # Load VCP candidates
-    vcp_df = pd.read_csv(VCP_CANDIDATES_PATH)
+    vcp_true_symbols = {
+        doc["symbol"]
+        for doc in vcp_col.find(
+            {"vcp_candidate": True},
+            {"_id": 0, "symbol": 1}
+        )
+    }
 
-    if not {"symbol", "vcp_candidate"}.issubset(vcp_df.columns):
-        return []
+    final_symbols = {
+        doc["symbol"]
+        for doc in final_col.find(
+            {},
+            {"_id": 0, "symbol": 1}
+        )
+    }
 
-    # Step 1: All VCP = True symbols
-    vcp_true_symbols = set(
-        vcp_df[vcp_df["vcp_candidate"] == True]["symbol"]
-    )
-
-    # Load final selected stocks
-    final_df = pd.read_csv(FINAL_STOCKS_PATH)
-
-    if "symbol" not in final_df.columns:
-        return []
-
-    # Step 2: Final selected symbols
-    final_symbols = set(final_df["symbol"])
-
-    # Step 3: Remaining VCP symbols
-    remaining_symbols = vcp_true_symbols - final_symbols
-
-    # Return as sorted list (or dicts if needed later)
-    return sorted(list(remaining_symbols))
+    return sorted(list(vcp_true_symbols - final_symbols))

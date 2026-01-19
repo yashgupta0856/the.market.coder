@@ -1,14 +1,12 @@
-import json
-from pathlib import Path
-
-MONTE_CARLO_PATH = "data/processed/monte_carlo.json"
+from utils.mongo import get_collection
 
 
 def get_monte_carlo_for_symbol(symbol: str):
-    if not Path(MONTE_CARLO_PATH).exists():
-        return None
+    mc_col = get_collection("monte_carlo")
 
-    with open(MONTE_CARLO_PATH) as f:
-        data = json.load(f)
+    doc = mc_col.find_one(
+        {"symbol": symbol},
+        {"_id": 0}   
+    )
 
-    return data.get(symbol)
+    return doc
