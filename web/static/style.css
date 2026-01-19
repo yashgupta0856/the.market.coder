@@ -1,11 +1,11 @@
-/* =========================================================
+/* 
    QuantFusion — Institutional Terminal Layout (FINAL CANON)
    NO DESIGN CHANGES — ALL ORIGINAL CSS PRESERVED
-   ========================================================= */
+    */
 
-/* =====================
+/* 
    DESIGN TOKENS
-   ===================== */
+    */
 :root {
     --bg: #020617;
     --panel: rgba(2,6,23,0.78);
@@ -19,9 +19,9 @@
     --mono: "JetBrains Mono", monospace;
 }
 
-/* =====================
+/* 
    BASE
-   ===================== */
+    */
 * { box-sizing: border-box; }
 
 body {
@@ -37,9 +37,9 @@ body {
     margin: 0 auto;
 }
 
-/* =====================
+/* 
    HOME — TERMINAL CTA
-   ===================== */
+    */
 .home-cta-terminal {
     display: flex;
     justify-content: center;
@@ -85,9 +85,9 @@ body {
     color: var(--muted);
 }
 
-/* =====================
+/* 
    HEADER / NAVBAR
-   ===================== */
+    */
 .app-header {
     display: flex;
     justify-content: space-between;
@@ -157,9 +157,9 @@ body {
     padding-bottom: 2px;
 }
 
-/* =====================
+/* 
    PANEL (GLOBAL)
-   ===================== */
+    */
 .panel {
     background: var(--panel);
     border-radius: 18px;
@@ -169,9 +169,9 @@ body {
         0 30px 80px rgba(0,0,0,0.8);
 }
 
-/* =====================
+/* 
    MARKET HERO
-   ===================== */
+    */
 .market-hero {
     margin-bottom: 48px;
     padding: 34px;
@@ -248,9 +248,9 @@ body {
     font-size: 15px;
 }
 
-/* =====================
+/* 
    SECTOR INTELLIGENCE
-   ===================== */
+    */
 .sector-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
@@ -279,9 +279,9 @@ body {
     border-bottom: 1px dashed rgba(255,255,255,0.08);
 }
 
-/* =====================
+/* 
    SECTOR ROTATION
-   ===================== */
+    */
 .rotation-panel { margin-bottom: 36px; }
 
 .rotation-header {
@@ -328,9 +328,9 @@ body {
     font-weight: 600;
 }
 
-/* =====================
+/* 
    RANK ZONE
-   ===================== */
+    */
 .rank-zone {
     display: grid;
     grid-template-columns: 220px 1fr;
@@ -390,9 +390,9 @@ body {
 
 .rank-symbol { font-weight: 600; }
 
-/* =====================
+/* 
    MONTE CARLO
-   ===================== */
+    */
 .risk-btn {
     font-family: var(--mono);
     font-size: 11px;
@@ -465,9 +465,9 @@ body {
     font-weight: 600;
 }
 
-/* =====================
+/* 
    HOME — VCP SECTION
-   ===================== */
+    */
 .vcp-section {
     margin-bottom: 36px;
 }
@@ -476,7 +476,7 @@ body {
     margin: 10px 0 26px;
     padding: 10px 14px;
     font-family: var(--mono);
-    font-size: 15px;
+    font-size: 1px;
     line-height: 1.5;
     color: var(--muted);
     background: rgba(255,255,255,0.03);
@@ -485,9 +485,9 @@ body {
     letter-spacing: 0.4px;
 }
 
-/* =====================
+/* 
    HOME — AUTHOR SECTION
-   ===================== */
+    */
 .author-section {
     margin-top: 64px;
     padding-top: 18px;
@@ -519,9 +519,9 @@ body {
 }
 
 
-/* =====================
+/* 
    COMMUNITY
-   ===================== */
+    */
 .community-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
@@ -615,9 +615,9 @@ body {
     border-radius: 14px;
 }
 
-/* =====================
+/* 
    RESIDUAL ZONE (ZONE 4)
-   ===================== */
+    */
 .residual-panel {
     margin-top: 24px;
 }
@@ -646,9 +646,9 @@ body {
 }
 
 
-/* =====================
+/* 
    FOOTER
-   ===================== */
+    */
 .app-footer {
     padding: 18px 28px;
     border-top: 1px solid var(--border);
@@ -675,9 +675,9 @@ body {
 
 .footer-right a:hover { color: var(--accent); }
 
-/* =====================
+/* 
    MICRO INTERACTIONS
-   ===================== */
+    */
 .panel,
 .symbol-pill,
 .rotation-item {
@@ -693,9 +693,9 @@ body {
         0 20px 40px rgba(0,0,0,0.6);
 }
 
-/* =====================
+/* 
    RESPONSIVE
-   ===================== */
+    */
 @media (max-width: 1000px) {
     .market-hero-grid,
     .rank-zone {
