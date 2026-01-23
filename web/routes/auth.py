@@ -68,4 +68,4 @@ def login_user(
     )
 
     request.session["user_email"] = email
-    return RedirectResponse("/dashboard", status_code=302)
+    return RedirectResponse("/community", status_code=302)
