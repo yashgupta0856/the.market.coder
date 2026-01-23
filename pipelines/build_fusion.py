@@ -24,7 +24,7 @@ FILTERED_OUTPUT_PATH  = "data/processed/vcp_sector_filtered.csv"
 FINAL_OUTPUT_PATH     = "output/final_stock_scores.csv"
 
 
-# ---------- HELPERS (Mongo → CSV bridge) ----------
+#  HELPERS (Mongo → CSV bridge) 
 
 def mongo_to_csv(collection_name: str, output_path: str):
     col = get_collection(collection_name)
@@ -33,7 +33,7 @@ def mongo_to_csv(collection_name: str, output_path: str):
     return df
 
 
-# ---------- PHASE 5.1 — STOCK + SECTOR FUSION ----------
+#  PHASE 5.1 — STOCK + SECTOR FUSION 
 
 def run_phase5_1() -> pd.DataFrame:
     # READ FROM MONGODB
@@ -59,7 +59,7 @@ def run_phase5_1() -> pd.DataFrame:
     return fused_df
 
 
-# ---------- PHASE 5.2 — VCP + SECTOR FILTERING ----------
+#  PHASE 5.2 — VCP + SECTOR FILTERING 
 
 def run_phase5_2(fused_df: pd.DataFrame) -> pd.DataFrame:
     filtered_df = filter_vcp_with_sector(fused_df)
@@ -73,7 +73,7 @@ def run_phase5_2(fused_df: pd.DataFrame) -> pd.DataFrame:
     return filtered_df
 
 
-# ---------- SECTOR ROTATION BOOST ----------
+#  SECTOR ROTATION BOOST 
 
 def apply_sector_rotation_boost(stock_df: pd.DataFrame) -> pd.DataFrame:
     if not Path(SECTOR_ROTATION_PATH).exists():
@@ -102,7 +102,7 @@ def apply_sector_rotation_boost(stock_df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ---------- PHASE 5.3 — STOCK SCORING & RANKING ----------
+#  PHASE 5.3 — STOCK SCORING & RANKING 
 
 def run_phase5_3(filtered_df: pd.DataFrame) -> pd.DataFrame:
     ranked_df = compute_stock_score(filtered_df)
@@ -122,7 +122,7 @@ def run_phase5_3(filtered_df: pd.DataFrame) -> pd.DataFrame:
     return ranked_df
 
 
-# ---------- PIPELINE ENTRY POINT ----------
+#  PIPELINE ENTRY POINT 
 
 def run_phase5_pipeline():
     print("Starting Phase 5.1 — Stock Sector Fusion")

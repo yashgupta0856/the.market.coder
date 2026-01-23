@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="panel" style="max-width:520px;margin:70px auto;">
+
+    <div style="text-align:center;margin-bottom:26px;">
+        <div class="hero-title">ACCESS PROVISIONING</div>
+        <div class="hero-symbol" style="font-size:22px;">
+            COMMUNITY MODULE
+        </div>
+    </div>
+
+    <div class="vcp-note">
+        Community access is provisioned via a <strong>one-time verification fee</strong>.
+        This helps filter serious participants and maintain signal quality.
+    </div>
+
+    <div class="panel" style="
+        margin:22px 0;
+        padding:18px;
+        border-radius:14px;
+        background:rgba(2,6,23,0.65);
+    ">
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            font-family:var(--mono);
+            font-size:13px;
+        ">
+            <span style="color:var(--muted);">ACCESS TIER</span>
+            <span>COMMUNITY</span>
+        </div>
+
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            margin-top:10px;
+            font-family:var(--mono);
+            font-size:13px;
+        ">
+            <span style="color:var(--muted);">ONE-TIME FEE</span>
+            <span style="color:var(--accent);font-weight:600;">₹99</span>
+        </div>
+    </div>
+
+    {% if pending %}
+
+        <div style="
+            margin-top:18px;
+            padding:12px 14px;
+            background:rgba(56,189,248,0.08);
+            border-left:3px solid var(--accent);
+            border-radius:8px;
+            font-family:var(--mono);
+            font-size:12px;
+            color:var(--text);
+            line-height:1.6;
+        ">
+            <strong>VERIFICATION IN PROGRESS</strong><br>
+            Your payment proof has been received and is currently under review.
+            Access will be granted within <strong>1 hour</strong> after verification.
+        </div>
+
+    {% else %}
+
+        <div class="vcp-note">
+            Step 1: Scan the QR code below and complete the payment.<br>
+            Step 2: Upload the payment proof to initiate verification.
+        </div>
+
+        <div style="text-align:center;margin:22px 0;">
+            <img
+                src="/static/payment.jpeg"
+                alt="Payment QR"
+                style="
+                    width:200px;
+                    border-radius:14px;
+                    border:1px solid rgba(255,255,255,0.12);
+                    box-shadow:0 20px 40px rgba(0,0,0,0.6);
+                "
+            >
+        </div>
+
+        <form
+            action="/payment/upload"
+            method="post"
+            enctype="multipart/form-data"
+            style="
+                display:flex;
+                flex-direction:column;
+                gap:14px;
+                margin-top:10px;
+            "
+        >
+            <label style="
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:1px;
+    color:var(--muted);
+">
+    PAYMENT PROOF (IMAGE)
+</label>
+
+<label
+    for="payment-proof"
+    style="
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+
+        padding:18px;
+        border-radius:12px;
+
+        background:rgba(255,255,255,0.03);
+        border:1px dashed rgba(56,189,248,0.35);
+
+        cursor:pointer;
+        transition:background 0.15s ease, border-color 0.15s ease;
+    "
+    onmouseover="this.style.borderColor='rgba(56,189,248,0.7)'"
+    onmouseout="this.style.borderColor='rgba(56,189,248,0.35)'"
+>
+    <div style="
+        font-family:var(--mono);
+        font-size:12px;
+        color:var(--accent);
+    ">
+        Click to upload payment proof
+    </div>
+
+    
+
+    <input
+        id="payment-proof"
+        type="file"
+        name="image"
+        accept="image/*"
+        required
+        style="display:none;"
+    >
+</label>
+
+
+            
+
+            <button
+                type="submit"
+                class="risk-btn"
+                style="margin-top:12px;"
+            >
+                SUBMIT FOR VERIFICATION
+            </button>
+        </form>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

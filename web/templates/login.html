@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="panel" style="max-width:420px;margin:80px auto;">
+    <div style="text-align:center;margin-bottom:22px;">
+        <div class="hero-title">ACCESS CONTROL</div>
+        <div class="hero-symbol" style="font-size:22px;">LOGIN</div>
+    </div>
+
+    <form method="post" action="/login" style="display:flex;flex-direction:column;gap:14px;">
+
+        <label style="font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--muted);">
+            EMAIL
+        </label>
+        <input
+            type="email"
+            name="email"
+            required
+            placeholder="you@domain.com"
+            style="
+                padding:10px 12px;
+                border-radius:8px;
+                background:rgba(255,255,255,0.04);
+                border:1px solid rgba(255,255,255,0.12);
+                color:var(--text);
+                font-family:var(--mono);
+            "
+        >
+
+        <label style="font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--muted);">
+            PASSWORD
+        </label>
+        <input
+            type="password"
+            name="password"
+            required
+            placeholder="••••••••"
+            style="
+                padding:10px 12px;
+                border-radius:8px;
+                background:rgba(255,255,255,0.04);
+                border:1px solid rgba(255,255,255,0.12);
+                color:var(--text);
+                font-family:var(--mono);
+            "
+        >
+
+        <button
+            type="submit"
+            class="risk-btn"
+            style="margin-top:18px;"
+        >
+            AUTHENTICATE
+        </button>
+    </form>
+
+    <div style="margin-top:20px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted);">
+        New to QuantFusion?
+        <a href="/signup" style="color:var(--accent);text-decoration:none;">
+            Create Account
+        </a>
+    </div>
+</section>
+
+{% endblock %}

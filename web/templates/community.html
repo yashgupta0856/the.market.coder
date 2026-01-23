@@ -1,53 +1,132 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2 class="section-title">Community VCP Views</h2>
-<div class="vcp-note">
-    Disclaimer: These market views are shared purely for educational and research purposes based on my personal learning. I am not a SEBI-registered advisor, and I do not take responsibility for any profits or losses incurred from acting on this information.
-</div>
+<!-- ACCESS CONTEXT -->
+
+<section class="panel" style="margin-bottom:26px;">
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        font-family:var(--mono);
+        font-size:12px;
+    ">
+        <div>
+            <span style="color:var(--muted);">AUTHENTICATED USER</span><br>
+            <strong>{{ user_email }}</strong>
+        </div>
+
+        <div style="
+            padding:4px 12px;
+            border-radius:999px;
+            background:rgba(34,197,94,0.18);
+            color:var(--positive);
+            font-size:11px;
+        ">
+            COMMUNITY ACCESS ENABLED
+        </div>
+    </div>
+</section>
+
+<!-- PAGE HEADER -->
+
+<section class="market-hero" style="margin-bottom:36px;">
+
+    <div class="market-hero-header">
+        <div class="hero-title">COMMUNITY RESEARCH FEED</div>
+        <!-- <div class="hero-symbol" style="font-size:24px;">
+            VCP SETUPS
+        </div> -->
+    </div>
+
+    <div class="vcp-note" style="margin-bottom:14px;">
+        This section contains <strong>personally curated VCP observations</strong> shared as part of an ongoing learning
+        and research process. These are <strong>not trade calls</strong> and should be interpreted strictly as
+        structural studies.
+
+        <strong>Disclaimer:</strong> I am not a SEBI-registered advisor. No responsibility is taken for profits or losses
+        arising from the use of this information.
+    </div>
+
+</section>
+
+<!-- COMMUNITY POSTS -->
 
 {% if posts %}
+
 <div class="community-grid">
+
     {% for post in posts %}
     <div class="community-card">
 
+        <!-- HEADER -->
         <div class="community-header">
-            <div class="community-symbol">{{ post.symbol }}</div>
-            <div class="community-time">
-                {{ post.created_at.strftime("%d %b %Y %H:%M") }}
+            <div>
+                <div class="community-symbol">{{ post.symbol }}</div>
+                <div class="community-time">
+                    {{ post.created_at.strftime("%d %b %Y • %H:%M") }}
+                </div>
             </div>
+
+            <!-- <div style="
+                font-family:var(--mono);
+                font-size:11px;
+                color:var(--muted);
+                text-align:right;
+            ">
+                STRUCTURE<br>
+                VCP
+            </div> -->
         </div>
 
+        <!-- LEVELS -->
         <div class="community-levels">
             <div class="level-item">
-                <span class="level-label">ENTRY</span>
+                <span class="level-label">ENTRY ZONE</span>
                 <span class="level-value">{{ post.entry }}</span>
             </div>
             <div class="level-item">
-                <span class="level-label">STOP LOSS</span>
+                <span class="level-label">RISK INVALIDATION</span>
                 <span class="level-value">{{ post.stop_loss }}</span>
             </div>
             <div class="level-item">
-                <span class="level-label">TARGET</span>
+                <span class="level-label">UPSIDE REFERENCE</span>
                 <span class="level-value">{{ post.target }}</span>
             </div>
         </div>
 
+        <!-- COMMENTARY -->
         <div class="community-commentary">
             {{ post.commentary }}
         </div>
 
+        <!-- IMAGE -->
         {% if post.image_path %}
         <div class="community-image">
-            <img src="{{ post.image_path }}" alt="{{ post.symbol }} VCP setup">
+            <img
+                src="{{ post.image_path }}"
+                alt="{{ post.symbol }} VCP structure"
+            >
         </div>
         {% endif %}
 
     </div>
     {% endfor %}
+
 </div>
+
 {% else %}
-<p class="muted">No community post yet</p>
+
+<section class="panel" style="text-align:center;">
+    <div style="
+        font-family:var(--mono);
+        font-size:13px;
+        color:var(--muted);
+    ">
+        No community research entries available yet.
+    </div>
+</section>
+
 {% endif %}
 
 {% endblock %}

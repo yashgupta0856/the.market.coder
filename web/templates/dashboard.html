@@ -83,31 +83,41 @@
             <span class="muted">(highest conviction first)</span>
         </div>
 
-        <table class="rank-table">
-            <thead>
-                <tr>
-                    <th>RANK</th>
-                    <th>SYMBOL</th>
-                    <th>CMP</th>
-                    <th>Risk Simulator</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in ranked_stocks %}
-                <tr>
-                    <td>{{ s.rank }}</td>
-                    <td class="rank-symbol">{{ s.symbol }}</td>
-                    <td>{{ "%.2f"|format(s.close) }}</td>
-                    <td>
-                        <button class="risk-btn"
-                                onclick="openMonteCarlo('{{ s.symbol }}')">
-                            View
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- SCROLL-CONSTRAINED RANK TABLE -->
+        <div style="
+            max-height:360px;
+            overflow-y:auto;
+            margin-top:12px;
+            border-radius:12px;
+            scrollbar-width:thin;
+            scrollbar-color: rgba(56,189,248,0.4) transparent;
+        ">
+            <table class="rank-table">
+                <thead>
+                    <tr>
+                        <th>RANK</th>
+                        <th>SYMBOL</th>
+                        <th>CMP</th>
+                        <th>Risk Simulator</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in ranked_stocks %}
+                    <tr>
+                        <td>{{ s.rank }}</td>
+                        <td class="rank-symbol">{{ s.symbol }}</td>
+                        <td>{{ "%.2f"|format(s.close) }}</td>
+                        <td>
+                            <button class="risk-btn"
+                                    onclick="openMonteCarlo('{{ s.symbol }}')">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </section>
@@ -323,7 +333,7 @@ function renderMonteCarloChart(paths) {
     const ctx = document.getElementById("mcChart").getContext("2d");
     if (mcChart) mcChart.destroy();
 
-    const datasets = paths.slice(0, 20).map((p, idx) => ({
+    const datasets = paths.slice(0, 20).map(p => ({
         data: p,
         borderWidth: 1,
         pointRadius: 0,

@@ -1,12 +1,12 @@
 from fastapi import APIRouter, UploadFile, File, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from web.services.community_service import (
     create_post,
     fetch_all_posts
 )
-
+from web.services.access_control import check_community_access
 from utils.cloudinary_uploader import upload_image
 
 router = APIRouter(tags=["Community"])
@@ -14,23 +14,32 @@ templates = Jinja2Templates(directory="web/templates")
 
 
 
-# COMMUNITY PAGE
-
+# COMMUNITY PAGE (READ ACCESS — LOGIN + PAYMENT REQUIRED)
 
 @router.get("/community", response_class=HTMLResponse)
 def community_page(request: Request):
+    email = request.session.get("user_email")
+
+    if not email:
+        return RedirectResponse("/login", status_code=302)
+
+    if not check_community_access(email):
+        return RedirectResponse("/payment-page", status_code=302)
+
     posts = fetch_all_posts()
+
     return templates.TemplateResponse(
         "community.html",
         {
             "request": request,
-            "posts": posts
+            "posts": posts,
+            "user_email": email
         }
     )
 
 
 
-# CREATE COMMUNITY POST
+# CREATE COMMUNITY POST (NO AUTH — SYSTEM / OWNER ONLY)
 
 
 @router.post("/api/community/create")
@@ -42,9 +51,15 @@ async def create_community_post(
     commentary: str = Form(None),
     image: UploadFile = File(None),
 ):
+    """
+    IMPORTANT:
+    - This endpoint is intentionally UNPROTECTED.
+    - Community posts are curated and added only by the system owner.
+    - Do NOT add login / admin checks here.
+    """
+
     image_url = None
 
-    # Upload image to Cloudinary
     if image:
         image_url = upload_image(image.file)
 
@@ -54,7 +69,8 @@ async def create_community_post(
         "stop_loss": stop_loss,
         "target": target,
         "commentary": commentary,
-        "image_path": image_url,   # Cloud URL
+        "image_path": image_url,
+        "author": "QuantFusion"
     })
 
     return {
