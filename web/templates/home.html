@@ -1,122 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- HOME: PLATFORM OVERVIEW -->
+<section class="hero">
+  <h1>Discover High-Quality Stocks Using AI</h1>
+  <p>
+    QuantFusion analyzes the Indian stock market daily to surface
+    high-probability volatility contraction setups used by professional investors.
+  </p>
 
-<section class="market-hero">
-
-    <div class="market-hero-header">
-        <div class="hero-title">
-            PLATFORM OVERVIEW
-        </div>
-        <div class="hero-symbol">
-            QuantFusion
-        </div>
-    </div>
-
-    <div class="market-hero-grid">
-
-        <!-- LEFT: SYSTEM SCOPE -->
-        <div class="hero-panel">
-            <h4>System Scope</h4>
-
-            <div class="hero-metric">
-                <span class="metric-name">Asset Class</span>
-                <span class="metric-value">Indian Equities</span>
-            </div>
-
-            <div class="hero-metric">
-                <span class="metric-name">Structural Framework</span>
-                <span class="metric-value">Volatility Contraction (VCP)</span>
-            </div>
-
-            <div class="hero-metric">
-                <span class="metric-name">Primary Output</span>
-                <span class="metric-value">Ranked Opportunity Set</span>
-            </div>
-
-            <div class="hero-metric">
-                <span class="metric-name">Research Flow</span>
-                <span class="metric-value">Screen → Validate → Prioritize</span>
-            </div>
-        </div>
-
-        <!-- RIGHT: DESIGN PRINCIPLES -->
-        <div class="hero-panel">
-            <h4>Design Principles</h4>
-
-            <div class="hero-gate">
-                <span class="gate-name">Price Prediction</span>
-                <span class="pill pass">EXCLUDED</span>
-            </div>
-
-            <div class="hero-gate">
-                <span class="gate-name">Structural Validation</span>
-                <span class="pill pass">MANDATORY</span>
-            </div>
-
-            <div class="hero-gate">
-                <span class="gate-name">Explainability</span>
-                <span class="pill pass">ENFORCED</span>
-            </div>
-
-            <div class="hero-gate">
-                <span class="gate-name">Institutional Bias</span>
-                <span class="pill pass">INTENTIONAL</span>
-            </div>
-        </div>
-
-    </div>
+  <div class="hero-actions">
+    <a href="/dashboard" class="btn-primary">View Dashboard</a>
+    <!-- <a href="/signup" class="btn-secondary">Create Free Account</a> -->
+  </div>
 </section>
 
-<!-- PRIMARY ACTION -->
+<section class="feature-grid">
+  <div class="feature-card">
+    <h3>AI Market Scanner</h3>
+    <p>
+      Automatically filters thousands of stocks using rule-based
+      institutional VCP logic.
+    </p>
+  </div>
 
-<section class="home-cta-terminal">
-    <a href="/dashboard" class="terminal-enter-btn">
-        <span class="enter-label">OPEN RESEARCH TERMINAL</span>
-        <span class="enter-sub">VCP Market Intelligence Dashboard</span>
-    </a>
+  <div class="feature-card">
+    <h3>Sector Intelligence</h3>
+    <p>
+      Identify which sectors are gaining strength and attracting smart capital.
+    </p>
+  </div>
+
+  <div class="feature-card">
+    <h3>Risk Visualization</h3>
+    <p>
+      Monte Carlo simulations help understand downside risk before taking trades.
+    </p>
+  </div>
 </section>
 
-<!-- VCP FRAMEWORK -->
-
-<section class="panel vcp-section">
-    <h4>Volatility Contraction Pattern (VCP)</h4>
-
-    <div class="vcp-note">
-        The Volatility Contraction Pattern (VCP) is a structural continuation framework
-        observed in strong uptrending stocks, where volatility progressively compresses
-        and downside participation diminishes near the right edge of a base. This behavior
-        reflects controlled institutional absorption rather than speculative demand.
-    </div>
-
-    <div class="vcp-note">
-        QuantFusion does not forecast breakouts or define price targets. Instead, it
-        evaluates whether a stock satisfies objective trend, volatility, price behavior,
-        and volume conditions <strong>prior</strong> to any potential expansion. VCP is
-        treated strictly as a structural qualification framework — not a trading signal.
-    </div>
-</section>
-
-<!-- AUTHOR / FOUNDER -->
-
-<section class="author-section">
-
-    <div class="author-name">
-        YASH GUPTA
-    </div>
-
-    <div class="author-role">
-        FOUNDER & SYSTEM ARCHITECT
-    </div>
-
-    <div class="author-description">
-        QuantFusion is developed as a deterministic, research-driven platform for market
-        structure analysis. The system emphasizes validation, transparency, and
-        repeatability, prioritizing institutional-style workflows over prediction,
-        discretion, or narrative-based decision making.
-    </div>
-
+<section class="panel" style="margin-top:60px;text-align:center;">
+  <h2>Built for Serious Investors</h2>
+  <p style="color:var(--muted);max-width:720px;margin:12px auto;">
+    No hype. No predictions. Just disciplined analysis, transparent logic,
+    and data-driven insights.
+  </p>
 </section>
 
 {% endblock %}

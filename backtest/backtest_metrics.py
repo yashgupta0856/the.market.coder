@@ -34,7 +34,7 @@ def compute_metrics(trades):
     print(f"Median Return (%)  : {median_return:.2f}")
     print(f"Best Trade (%)     : {best_trade:.2f}")
     print(f"Worst Trade (%)    : {worst_trade:.2f}")
-    print("=================================================\n")
+    print("=========\n")
 
     print("Sample Trades:")
     print(

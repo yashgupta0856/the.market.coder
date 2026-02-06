@@ -1,5 +1,3 @@
-# utils/mongo.py
-
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
@@ -13,14 +11,14 @@ if not MONGODB_URI:
 
 _client = MongoClient(
     MONGODB_URI,
-    serverSelectionTimeoutMS=30000,
-    connectTimeoutMS=20000,
-    socketTimeoutMS=20000,
+    serverSelectionTimeoutMS=60000,
+    connectTimeoutMS=60000,
+    socketTimeoutMS=60000,
     tls=True,
     retryWrites=True,
 )
 
-_db = _client.get_database()  # uses db name from URI (quantfusion)
+_db = _client.get_database()  
 
 
 def get_db():

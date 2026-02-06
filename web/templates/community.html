@@ -1,132 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- ACCESS CONTEXT -->
-
-<section class="panel" style="margin-bottom:26px;">
-    <div style="
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        font-family:var(--mono);
-        font-size:12px;
-    ">
-        <div>
-            <span style="color:var(--muted);">AUTHENTICATED USER</span><br>
-            <strong>{{ user_email }}</strong>
-        </div>
-
-        <div style="
-            padding:4px 12px;
-            border-radius:999px;
-            background:rgba(34,197,94,0.18);
-            color:var(--positive);
-            font-size:11px;
-        ">
-            COMMUNITY ACCESS ENABLED
-        </div>
-    </div>
+<section style="margin-bottom:32px;">
+  <h1>Community Research</h1>
+  <p class="subtitle">
+    Educational VCP observations shared by the QuantFusion team
+  </p>
 </section>
-
-<!-- PAGE HEADER -->
-
-<section class="market-hero" style="margin-bottom:36px;">
-
-    <div class="market-hero-header">
-        <div class="hero-title">COMMUNITY RESEARCH FEED</div>
-        <!-- <div class="hero-symbol" style="font-size:24px;">
-            VCP SETUPS
-        </div> -->
-    </div>
-
-    <div class="vcp-note" style="margin-bottom:14px;">
-        This section contains <strong>personally curated VCP observations</strong> shared as part of an ongoing learning
-        and research process. These are <strong>not trade calls</strong> and should be interpreted strictly as
-        structural studies.
-
-        <strong>Disclaimer:</strong> I am not a SEBI-registered advisor. No responsibility is taken for profits or losses
-        arising from the use of this information.
-    </div>
-
-</section>
-
-<!-- COMMUNITY POSTS -->
 
 {% if posts %}
-
 <div class="community-grid">
-
     {% for post in posts %}
-    <div class="community-card">
+   <div class="community-card">
+  <div class="status-tag">Started</div>
 
-        <!-- HEADER -->
-        <div class="community-header">
-            <div>
-                <div class="community-symbol">{{ post.symbol }}</div>
-                <div class="community-time">
-                    {{ post.created_at.strftime("%d %b %Y • %H:%M") }}
-                </div>
-            </div>
+  <h3>{{ post.symbol }}</h3>
 
-            <!-- <div style="
-                font-family:var(--mono);
-                font-size:11px;
-                color:var(--muted);
-                text-align:right;
-            ">
-                STRUCTURE<br>
-                VCP
-            </div> -->
-        </div>
+  <p style="color:var(--muted);">
+    Entry: {{ post.entry }} · Risk: {{ post.stop_loss }} · Target: {{ post.target }}
+  </p>
 
-        <!-- LEVELS -->
-        <div class="community-levels">
-            <div class="level-item">
-                <span class="level-label">ENTRY ZONE</span>
-                <span class="level-value">{{ post.entry }}</span>
-            </div>
-            <div class="level-item">
-                <span class="level-label">RISK INVALIDATION</span>
-                <span class="level-value">{{ post.stop_loss }}</span>
-            </div>
-            <div class="level-item">
-                <span class="level-label">UPSIDE REFERENCE</span>
-                <span class="level-value">{{ post.target }}</span>
-            </div>
-        </div>
+  <p>{{ post.commentary }}</p>
 
-        <!-- COMMENTARY -->
-        <div class="community-commentary">
-            {{ post.commentary }}
-        </div>
-
-        <!-- IMAGE -->
-        {% if post.image_path %}
-        <div class="community-image">
-            <img
-                src="{{ post.image_path }}"
-                alt="{{ post.symbol }} VCP structure"
-            >
-        </div>
-        {% endif %}
-
-    </div>
-    {% endfor %}
-
+  {% if post.image_path %}
+    <img src="{{ post.image_path }}" alt="{{ post.symbol }}">
+  {% endif %}
 </div>
 
+  {% endfor %}
+</div>
 {% else %}
-
-<section class="panel" style="text-align:center;">
-    <div style="
-        font-family:var(--mono);
-        font-size:13px;
-        color:var(--muted);
-    ">
-        No community research entries available yet.
-    </div>
-</section>
-
+<p>No research posts available yet.</p>
 {% endif %}
 
 {% endblock %}

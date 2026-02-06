@@ -1,360 +1,390 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- ZONE 2: SECTOR INTELLIGENCE (RELATIVE STRENGTH REGIMES) -->
+<!-- 
+PAGE HEADER
+ -->
+<section style="margin-bottom:32px;">
+  <h1>Market Dashboard</h1>
+  <p class="subtitle">
+    Institutional-style volatility contraction intelligence for Indian equities
+  </p>
+</section>
 
+<!-- 
+ZONE 2: SECTOR INTELLIGENCE (RELATIVE STRENGTH)
+ -->
 <section class="sector-row">
-    {% for title, key in [
-        ("Leading Sectors","leading"),
-        ("Improving Sectors","improving"),
-        ("Weakening Sectors","weakening"),
-        ("Lagging Sectors","lagging")
-    ] %}
-    <div class="panel sector-card">
-        <h4>{{ title }}</h4>
-        <ul>
-            {% for s in sector_cards[key] %}
-            <li>
-                {{ s.sector_index }}
-                <span>{{ "%.2f"|format(s.rs_score) }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endfor %}
 
-    <div class="panel sector-card">
-        <h4>Sector-wise Counts</h4>
-        {% if sector_vcp_counts %}
-        <ul>
-            {% for row in sector_vcp_counts %}
-            <li>
-                {{ row.sector_index }}
-                <span>{{ row.vcp_count }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="muted">No VCP stocks</p>
-        {% endif %}
-    </div>
+  {% for title, key in [
+    ("Leading Sectors","leading"),
+    ("Improving Sectors","improving"),
+    ("Weakening Sectors","weakening"),
+    ("Lagging Sectors","lagging")
+  ] %}
+  <div class="panel sector-card">
+    <h4>{{ title }}</h4>
+    <ul>
+      {% for s in sector_cards[key] %}
+      <li>
+        <span>{{ s.sector_index }}</span>
+        <span class="badge">{{ "%.2f"|format(s.rs_score) }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+
+  <div class="panel sector-card">
+    <h4>Sector-wise VCP Counts</h4>
+    {% if sector_vcp_counts %}
+    <ul>
+      {% for row in sector_vcp_counts %}
+      <li>
+        <span>{{ row.sector_index }}</span>
+        <span class="badge">{{ row.vcp_count }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="subtitle">No VCP-qualified stocks</p>
+    {% endif %}
+  </div>
+
 </section>
 
-<!-- SECTOR ROTATION -->
-
+<!-- 
+SECTOR ROTATION (CAPITAL WEIGHTED)
+ -->
+<!-- 
+SECTOR ROTATION (CAPITAL WEIGHTED)
+-->
 <section class="panel rotation-panel">
-    <div class="rotation-header">
-        SECTOR ROTATION — CAPITAL WEIGHTED
-        <span class="rotation-sub">(Rank #1 = Strongest capital leadership)</span>
-    </div>
 
-    <div class="rotation-grid">
-        {% for row in rotating_sectors %}
-        <div class="rotation-item">
-            <span class="rotation-sector">{{ row.sector_index }}</span>
-            <span class="rotation-rank">#{{ row.rotation_rank }}</span>
-        </div>
-        {% endfor %}
-    </div>
-</section>
+  <div class="rotation-header">
+    Sector Rotation — Capital Weighted
+    <span class="rotation-sub">(Rank #1 = strongest leadership)</span>
+  </div>
 
-<!-- ZONE 3: RANKING & SNAPSHOT -->
+  <div class="rotation-grid">
+    {% for row in rotating_sectors %}
+      <div class="rotation-item
+        {% if row.rotation_rank <= 3 %}
+          rotation-strong
+        {% elif row.rotation_rank >= 8 %}
+          rotation-weak
+          {% else %}
+    rotation-neutral
+        {% endif %}
+      ">
+        <span class="rotation-sector">
+          {{ row.sector_index }}
+        </span>
 
-<section class="rank-zone">
-
-    <div class="panel snapshot-panel">
-        <div class="snapshot-item">
-            <span class="snapshot-label">UNIVERSE</span>
-            <span class="snapshot-value">{{ system_stats.universe_size }}</span>
-        </div>
-        <div class="snapshot-item">
-            <span class="snapshot-label">VCP</span>
-            <span class="snapshot-value">{{ system_stats.vcp_candidates }}</span>
-        </div>
-        <div class="snapshot-item">
-            <span class="snapshot-label">RANKED</span>
-            <span class="snapshot-value">{{ system_stats.final_ranked }}</span>
-        </div>
-    </div>
-
-    <div class="panel rank-panel">
-        <div class="rank-header">
-            RANKED VCP STOCKS
-            <span class="muted">(highest conviction first)</span>
-        </div>
-
-        <!-- SCROLL-CONSTRAINED RANK TABLE -->
-        <div style="
-            max-height:360px;
-            overflow-y:auto;
-            margin-top:12px;
-            border-radius:12px;
-            scrollbar-width:thin;
-            scrollbar-color: rgba(56,189,248,0.4) transparent;
-        ">
-            <table class="rank-table">
-                <thead>
-                    <tr>
-                        <th>RANK</th>
-                        <th>SYMBOL</th>
-                        <th>CMP</th>
-                        <th>Risk Simulator</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for s in ranked_stocks %}
-                    <tr>
-                        <td>{{ s.rank }}</td>
-                        <td class="rank-symbol">{{ s.symbol }}</td>
-                        <td>{{ "%.2f"|format(s.close) }}</td>
-                        <td>
-                            <button class="risk-btn"
-                                    onclick="openMonteCarlo('{{ s.symbol }}')">
-                                View
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+        <span class="rotation-rank">
+          #{{ row.rotation_rank }}
+        </span>
+      </div>
+    {% endfor %}
+  </div>
 
 </section>
 
-<!-- MONTE CARLO MODAL -->
 
-<div id="mc-modal" class="mc-modal hidden">
-    <div class="mc-content">
-        <div class="mc-header">
-            <span id="mc-title">Monte Carlo Risk Simulation (5 Days)</span>
-            <span class="mc-close" onclick="closeMonteCarlo()">×</span>
-        </div>
-
-        <div class="mc-symbol" id="mc-symbol"></div>
-
-        <table class="mc-table">
-            <tr>
-                <td>Expected Return</td>
-                <td id="mc-exp"></td>
-            </tr>
-            <tr>
-                <td>Probability of Loss</td>
-                <td id="mc-loss"></td>
-            </tr>
-            <tr>
-                <td>Probability of +5% Gain</td>
-                <td id="mc-gain"></td>
-            </tr>
-            <tr>
-                <td>Worst 5% Outcome</td>
-                <td id="mc-worst"></td>
-            </tr>
-        </table>
-
-        <div style="margin-top:16px;">
-            <canvas id="mcChart" height="160"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- ZONE 1: PRIMARY MARKET CONTEXT -->
-
+<!-- 
+ZONE 1: PRIMARY MARKET CONTEXT (RANK #1 EXPLAINABILITY)
+ -->
 <section class="market-hero">
 
-    <div class="market-hero-header">
-        <div class="hero-title">PRIMARY MARKET CONTEXT</div>
-        <div class="hero-symbol">
-            {{ rank1_left.symbol if rank1_left else "—" }}
-            <span class="hero-rank">#1</span>
-        </div>
+  <div class="market-hero-header">
+    <div class="hero-title">Primary Market Context</div>
+    <div class="hero-symbol">
+      {{ rank1_left.symbol if rank1_left else "—" }}
+      <span class="hero-rank">#1</span>
+    </div>
+  </div>
+
+  <div class="market-hero-grid">
+
+    <div class="hero-panel">
+      <h4>Model Conviction</h4>
+      {% for label, value in [
+        ("Trend Strength", rank1_left.trend_strength),
+        ("Momentum", rank1_left.momentum),
+        ("Volatility Tightness", rank1_left.volatility_tightness)
+      ] %}
+      <div class="hero-metric">
+        <span class="metric-name">{{ label }}</span>
+        <span class="metric-value">{{ "%.2f"|format(value) }}</span>
+      </div>
+      {% endfor %}
     </div>
 
-    <div class="market-hero-grid">
-
-        <div class="hero-panel">
-            <h4>Model Conviction</h4>
-            {% for label, value in [
-                ("Trend Strength", rank1_left.trend_strength),
-                ("Momentum", rank1_left.momentum),
-                ("Volatility Tightness", rank1_left.volatility_tightness)
-            ] %}
-            <div class="hero-metric">
-                <span class="metric-name">{{ label }}</span>
-                <span class="metric-value">{{ "%.2f"|format(value) }}</span>
-            </div>
-            {% endfor %}
-        </div>
-
-        <div class="hero-panel">
-            <h4>Structural Validation</h4>
-            {% for gate in [
-                ("Trend Gate", rank1_right.trend_gate),
-                ("Volatility Gate", rank1_right.volatility_gate),
-                ("Price Tightness", rank1_right.price_tightness_gate),
-                ("Volume Dry-Up", rank1_right.volume_dryup_gate)
-            ] %}
-            <div class="hero-gate">
-                <span class="gate-name">{{ gate[0] }}</span>
-                <span class="pill pass">{{ gate[1] }}</span>
-            </div>
-            {% endfor %}
-        </div>
-
+    <div class="hero-panel">
+      <h4>Structural Validation</h4>
+      {% for gate in [
+        ("Trend Gate", rank1_right.trend_gate),
+        ("Volatility Gate", rank1_right.volatility_gate),
+        ("Price Tightness", rank1_right.price_tightness_gate),
+        ("Volume Dry-Up", rank1_right.volume_dryup_gate)
+      ] %}
+      <div class="hero-gate">
+        <span class="gate-name">{{ gate[0] }}</span>
+        <span class="badge">{{ gate[1] }}</span>
+      </div>
+      {% endfor %}
     </div>
+
+  </div>
 </section>
 
-<!-- ZONE 4: OTHER VCP STOCKS -->
+<!-- 
+ZONE 3: SNAPSHOT + RANKED TABLE
+ -->
+<section class="rank-zone-full">
 
+ 
+
+  <div class="panel rank-panel">
+    <div class="rank-header">
+      <h2>Ranked VCP Stocks</h2>
+      <span class="subtitle">(highest conviction first)</span>
+    </div>
+
+    <div class="rank-table-scroll">
+      <table class="rank-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Symbol</th>
+            <th>CMP</th>
+            <th>Risk</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in ranked_stocks %}
+          <tr>
+            <td>{{ s.rank }}</td>
+            <td class="rank-symbol">{{ s.symbol }}</td>
+            <td>{{ "%.2f"|format(s.close) }}</td>
+            <td>
+              <button class="risk-btn" onclick="openMonteCarlo('{{ s.symbol }}')">
+                View
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</section>
+
+<!-- 
+ZONE 4: OTHER VCP STOCKS
+ -->
 <section class="panel residual-panel">
-    <div class="residual-header">
-        OTHER VCP-QUALIFIED STOCKS
-        <span class="muted">(passed structure, below ranking cutoff)</span>
-    </div>
+  <div class="residual-header">
+    Other VCP-Qualified Stocks
+    <span class="subtitle">(passed structure, below ranking cutoff)</span>
+  </div>
 
-    <div class="symbol-grid">
-        {% for sym in remaining_vcp_stocks %}
-        <div class="symbol-pill">{{ sym }}</div>
-        {% endfor %}
-    </div>
+<div class="residual-scroll">
+  <div class="residual-grid">
+    {% for sym in remaining_vcp_stocks %}
+      <div class="residual-item">{{ sym }}</div>
+    {% endfor %}
+  </div>
+</div>
+
+
 </section>
 
-<!-- BACKTEST SECTION -->
 
+<!-- 
+Backtest Section
+ -->
 {% if backtest_summary %}
-<section class="market-hero panel residual-panel">
+<section class="market-hero panel residual-panel section-gap">
 
-    <div style="
-        margin: 10px 0 26px;
-        padding: 10px 14px;
-        font-family: var(--mono);
-        font-size: 11px;
-        line-height: 1.5;
-        color: var(--muted);
-        background: rgba(255,255,255,0.03);
-        border-left: 3px solid rgba(56,189,248,0.45);
-        border-radius: 6px;
-        letter-spacing: 0.4px;
-    ">
-        <strong>SYSTEM NOTE</strong> — Backtest outcomes are dependent on the market regime observed during the evaluation period and should not be interpreted in isolation.
+  <!--  BACKTEST HEADER  -->
+  <div style="margin-bottom:28px;">
+    <h2>Strategy Backtest Summary</h2>
+    <!-- <p class="subtitle">
+      Historical performance evaluation of the VCP-based ranking framework
+    </p> -->
+  </div>
+
+  <!--  SYSTEM NOTE  -->
+  <div style="
+    margin-bottom:26px;
+    padding:12px 16px;
+    background:#f9fafb;
+    border-left:4px solid var(--primary);
+    border-radius:8px;
+    font-size:13px;
+    color:var(--bg);
+    line-height:1.5;
+  ">
+    <strong>System Note:</strong>
+    Backtest outcomes are dependent on the market regime observed during the
+    evaluation period and should not be interpreted in isolation.
+  </div>
+
+  <!--  BACKTEST METRICS  -->
+  <div class="market-hero-grid">
+
+    <!-- PERFORMANCE -->
+    <div class="hero-panel">
+      <h4>Backtest Performance</h4>
+
+      <div class="hero-metric">
+        <span class="metric-name">Evaluation Period</span>
+        <span class="metric-value">
+          {{ backtest_summary.start_date }} → {{ backtest_summary.end_date }}
+        </span>
+      </div>
+
+      <div class="hero-metric">
+        <span class="metric-name">Total Trades</span>
+        <span class="metric-value">
+          {{ backtest_summary.total_trades }}
+        </span>
+      </div>
+
+      <div class="hero-metric">
+        <span class="metric-name">Average Holding Days</span>
+        <span class="metric-value">
+          {{ backtest_summary.holding_days }}
+        </span>
+      </div>
+
+      <div class="hero-metric">
+        <span class="metric-name">Win Rate</span>
+        <span class="metric-value">
+          {{ "%.1f"|format(backtest_summary.win_ratio_pct) }}%
+        </span>
+      </div>
     </div>
 
-    <div class="market-hero-grid">
+    <!-- RETURNS -->
+    <div class="hero-panel">
+      <h4>Return Statistics</h4>
 
-        <div class="hero-panel">
-            <h4>Backtest Performance</h4>
+      <div class="hero-metric">
+        <span class="metric-name">Avg Return / Trade</span>
+        <span class="metric-value">
+          {{ "%.2f"|format(backtest_summary.average_return_pct) }}%
+        </span>
+      </div>
 
-            <div class="hero-metric">
-                <span class="metric-name">Period</span>
-                <span class="metric-value">
-                    {{ backtest_summary.start_date }} → {{ backtest_summary.end_date }}
-                </span>
-            </div>
+      <div class="hero-metric">
+        <span class="metric-name">Equity Start</span>
+        <span class="metric-value">
+          {{ "%.4f"|format(backtest_summary.equity_start) }}
+        </span>
+      </div>
 
-            <div class="hero-metric">
-                <span class="metric-name">Total Trades</span>
-                <span class="metric-value">{{ backtest_summary.total_trades }}</span>
-            </div>
+      <div class="hero-metric">
+        <span class="metric-name">Equity End</span>
+        <span class="metric-value">
+          {{ "%.4f"|format(backtest_summary.equity_end) }}
+        </span>
+      </div>
 
-            <div class="hero-metric">
-                <span class="metric-name">Holding Days</span>
-                <span class="metric-value">{{ backtest_summary.holding_days }}</span>
-            </div>
-
-            <div class="hero-metric">
-                <span class="metric-name">Win Rate</span>
-                <span class="metric-value">
-                    {{ "%.1f"|format(backtest_summary.win_ratio_pct) }}%
-                </span>
-            </div>
-        </div>
-
-        <div class="hero-panel">
-            <h4>Return Statistics</h4>
-
-            <div class="hero-metric">
-                <span class="metric-name">Avg Return / Trade</span>
-                <span class="metric-value">
-                    {{ "%.2f"|format(backtest_summary.average_return_pct) }}%
-                </span>
-            </div>
-
-            <div class="hero-metric">
-                <span class="metric-name">Equity Start</span>
-                <span class="metric-value">
-                    {{ "%.4f"|format(backtest_summary.equity_start) }}
-                </span>
-            </div>
-
-            <div class="hero-metric">
-                <span class="metric-name">Equity End</span>
-                <span class="metric-value">
-                    {{ "%.4f"|format(backtest_summary.equity_end) }}
-                </span>
-            </div>
-
-            <div class="hero-metric">
-                <span class="metric-name">Total Strategy Return</span>
-                <span class="metric-value" style="color: var(--accent);">
-                    {{ "%.2f"|format(backtest_summary.total_strategy_return_pct) }}%
-                </span>
-            </div>
-        </div>
-
+      <div class="hero-metric">
+        <span class="metric-name">Total Strategy Return</span>
+        <span class="metric-value" style="color:var(--primary);font-weight:700;">
+          {{ "%.2f"|format(backtest_summary.total_strategy_return_pct) }}%
+        </span>
+      </div>
     </div>
+
+  </div>
+
 </section>
 {% endif %}
 
+
+<!-- 
+MONTE CARLO MODAL (UNCHANGED LOGIC)
+ -->
+<div id="mc-modal" class="mc-modal hidden">
+  <div class="mc-content">
+    <div class="mc-header">
+      <span>Monte Carlo Risk Simulation (5 Days)</span>
+      <span class="mc-close" onclick="closeMonteCarlo()">×</span>
+    </div>
+
+    <div class="mc-symbol" id="mc-symbol"></div>
+
+   <div class="mc-metrics">
+  <div class="mc-row">
+    <span>Expected Return</span>
+    <span id="mc-exp" class="mc-value"></span>
+  </div>
+  <div class="mc-row">
+    <span>Probability of Loss</span>
+    <span id="mc-loss" class="mc-value"></span>
+  </div>
+  <div class="mc-row">
+    <span>Probability of +5% Gain</span>
+    <span id="mc-gain" class="mc-value"></span>
+  </div>
+  <div class="mc-row">
+    <span>Worst 5% Outcome</span>
+    <span id="mc-worst" class="mc-value"></span>
+  </div>
+</div>
+
+
+    <canvas id="mcChart" height="160"></canvas>
+  </div>
+</div>
+
+<!-- 
+JS (UNCHANGED)
+ -->
 <script>
 let mcChart = null;
 
 async function openMonteCarlo(symbol) {
-    document.getElementById("mc-modal").classList.remove("hidden");
-    document.getElementById("mc-symbol").innerText = "Symbol: " + symbol;
+  document.getElementById("mc-modal").classList.remove("hidden");
+  document.getElementById("mc-symbol").innerText = "Symbol: " + symbol;
 
-    const res = await fetch(`/api/monte-carlo/${symbol}`);
-    const data = await res.json();
-    if (!data || data.status !== "success") return;
+  const res = await fetch(`/api/monte-carlo/${symbol}`);
+  const data = await res.json();
+  if (!data || data.status !== "success") return;
 
-    const m = data.metrics;
-    document.getElementById("mc-exp").innerText =
-        (m.expected_return_pct >= 0 ? "+" : "") + m.expected_return_pct + "%";
-    document.getElementById("mc-loss").innerText =
-        m.probability_of_loss_pct + "%";
-    document.getElementById("mc-gain").innerText =
-        m.probability_of_5pct_gain_pct + "%";
-    document.getElementById("mc-worst").innerText =
-        m.worst_5pct_outcome_pct + "%";
+  const m = data.metrics;
+  document.getElementById("mc-exp").innerText = m.expected_return_pct + "%";
+  document.getElementById("mc-loss").innerText = m.probability_of_loss_pct + "%";
+  document.getElementById("mc-gain").innerText = m.probability_of_5pct_gain_pct + "%";
+  document.getElementById("mc-worst").innerText = m.worst_5pct_outcome_pct + "%";
 
-    renderMonteCarloChart(data.paths);
-}
+  const ctx = document.getElementById("mcChart").getContext("2d");
+  if (mcChart) mcChart.destroy();
 
-function renderMonteCarloChart(paths) {
-    const ctx = document.getElementById("mcChart").getContext("2d");
-    if (mcChart) mcChart.destroy();
-
-    const datasets = paths.slice(0, 20).map(p => ({
+  mcChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: data.paths[0].map((_, i) => i),
+      datasets: data.paths.slice(0, 20).map(p => ({
         data: p,
         borderWidth: 1,
-        pointRadius: 0,
-        fill: false
-    }));
-
-    mcChart = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: paths[0].map((_, i) => `Day ${i}`),
-            datasets
-        },
-        options: {
-            plugins: { legend: { display: false } },
-            scales: { x: { display: false } }
-        }
-    });
+        pointRadius: 0
+      }))
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { x: { display: false } }
+    }
+  });
 }
 
 function closeMonteCarlo() {
-    document.getElementById("mc-modal").classList.add("hidden");
+  document.getElementById("mc-modal").classList.add("hidden");
 }
 </script>
 

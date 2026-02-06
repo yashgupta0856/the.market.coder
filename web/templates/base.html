@@ -1,58 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>QuantFusion — VCP Market Intelligence</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>QuantFusion — AI Stock Intelligence</title>
+
+  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
 <header class="app-header">
-    <div class="nav-left">
-        <div class="brand">QuantFusion</div>
-        <div class="subtitle">Institutional VCP Market Intelligence</div>
-    </div>
+  <div>
+    <div class="brand">QuantFusion</div>
+    <div class="subtitle">AI-powered stock discovery for Indian markets</div>
+  </div>
 
-    <div class="nav-right">
-        <div class="nav-item">
-            STATUS
-            <span class="status-pill live">LIVE</span>
-        </div>
-
-        <div class="nav-item">
-            LAST RUN
-            <span class="nav-mono">{{ system_stats.last_run if system_stats else "—" }}</span>
-        </div>
-
-        <div class="nav-links">
-            <a href="/" class="nav-link">Home</a>
-            <a href="/dashboard" class="nav-link">Dashboard</a>
-            <a href="/community" class="nav-link">Community</a>
-        </div>
-    </div>
+  <nav class="nav-right">
+    <a href="/">Home</a>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/community">Community</a>
+  </nav>
 </header>
 
 <main class="app-container">
-    {% block content %}{% endblock %}
+  {% block content %}{% endblock %}
 </main>
 
 <footer class="app-footer">
-    <div class="footer-content">
-        <div class="footer-left">
-            Developed &amp; maintained by <strong>Yash Gupta</strong>
-        </div>
-        <div class="footer-right">
-            <a href="https://x.com/_yash_gupta_13" target="_blank">X</a>
-            <a href="https://www.linkedin.com/in/yashgupta0856/" target="_blank">LinkedIn</a>
-            <a href="https://github.com/yashgupta0856" target="_blank">GitHub</a>
-        </div>
+  <div class="footer-content">
+
+    <div class="footer-left">
+      <span class="footer-brand">QuantFusion</span>
+      <span class="footer-sep">·</span>
+      <span>AI Market Intelligence</span>
+      <span class="footer-sep">·</span>
+      <span>Built by Yash Gupta</span>
     </div>
+
+    <div class="footer-right">
+      <a href="https://github.com/yashgupta0856" target="_blank">GitHub</a>
+      <a href="https://www.linkedin.com/in/yashgupta0856/" target="_blank">LinkedIn</a>
+      <a href="https://x.com/_yash_gupta_13" target="_blank">X</a>
+    </div>
+
+  </div>
 </footer>
+
 
 </body>
 </html>

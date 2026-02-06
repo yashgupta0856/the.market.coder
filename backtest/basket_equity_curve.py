@@ -79,7 +79,6 @@ def print_equity_summary(equity_df):
     print(f"Start Equity        : {start_equity:.4f}")
     print(f"End Equity          : {end_equity:.4f}")
     print(f"Total Return (%)    : {total_return_pct:.2f}")
-    print("=====================================================\n")
 
     print("Sample Equity Curve:")
     print(equity_df.head(10).to_string())
