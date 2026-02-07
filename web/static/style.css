@@ -53,6 +53,21 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+.btn-secondary {
+    background: #eef2ff;
+    color: #3730a3;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.modal-content.wide {
+    width: 90%;
+    max-width: 1000px;
+}
+
+
 .subtitle {
   font-size: 13px;
   color: var(--muted);
@@ -571,6 +586,17 @@ body {
 
 /*  UTIL  */
 .section-gap { margin-top: 24px; }
+
+
+.mc-content.wide {
+  width: 1200px;       /* ⬅ increased from earlier */
+  max-width: 96vw;    /* responsive */
+}
+
+#chart-container,
+#volume-container {
+  width: 100%;
+}
 
 /*  RESPONSIVE  */
 @media (max-width: 900px) {

@@ -56,9 +56,7 @@ ZONE 2: SECTOR INTELLIGENCE (RELATIVE STRENGTH)
 <!-- 
 SECTOR ROTATION (CAPITAL WEIGHTED)
  -->
-<!-- 
-SECTOR ROTATION (CAPITAL WEIGHTED)
--->
+
 <section class="panel rotation-panel">
 
   <div class="rotation-header">
@@ -159,6 +157,7 @@ ZONE 3: SNAPSHOT + RANKED TABLE
             <th>Symbol</th>
             <th>CMP</th>
             <th>Risk</th>
+            <th>View Chart</th>
           </tr>
         </thead>
         <tbody>
@@ -168,7 +167,12 @@ ZONE 3: SNAPSHOT + RANKED TABLE
             <td class="rank-symbol">{{ s.symbol }}</td>
             <td>{{ "%.2f"|format(s.close) }}</td>
             <td>
-              <button class="risk-btn" onclick="openMonteCarlo('{{ s.symbol }}')">
+              <button class="risk-btn btn-primary" onclick="openMonteCarlo('{{ s.symbol }}')">
+                View
+              </button>
+            </td>
+            <td>
+              <button class="risk-btn btn-secondary" onclick="openChart('{{ s.symbol }}')">
                 View
               </button>
             </td>
@@ -343,49 +347,142 @@ MONTE CARLO MODAL (UNCHANGED LOGIC)
   </div>
 </div>
 
+
+<!-- CHART MODAL (SAME STRUCTURE AS MONTE CARLO) -->
+<div id="chart-modal" class="mc-modal hidden">
+  <div class="mc-content wide">
+
+    <div class="mc-header">
+      <span id="chart-title">Price Chart</span>
+      <span class="mc-close" onclick="closeChart()">×</span>
+    </div>
+
+    <div id="chart-container" style="height:420px;"></div>
+    <!-- <div id="volume-container" style="height:160px;margin-top:12px;"></div> -->
+
+  </div>
+</div>
+
+
+
 <!-- 
-JS (UNCHANGED)
+JS 
  -->
 <script>
+/* 
+   MONTE CARLO RISK SIMULATION (Chart.js)
+    */
+
 let mcChart = null;
 
 async function openMonteCarlo(symbol) {
-  document.getElementById("mc-modal").classList.remove("hidden");
-  document.getElementById("mc-symbol").innerText = "Symbol: " + symbol;
+    document.getElementById("mc-modal").classList.remove("hidden");
+    document.getElementById("mc-symbol").innerText = "Symbol: " + symbol;
 
-  const res = await fetch(`/api/monte-carlo/${symbol}`);
-  const data = await res.json();
-  if (!data || data.status !== "success") return;
+    const res = await fetch(`/api/monte-carlo/${symbol}`);
+    const data = await res.json();
+    if (!data || data.status !== "success") return;
 
-  const m = data.metrics;
-  document.getElementById("mc-exp").innerText = m.expected_return_pct + "%";
-  document.getElementById("mc-loss").innerText = m.probability_of_loss_pct + "%";
-  document.getElementById("mc-gain").innerText = m.probability_of_5pct_gain_pct + "%";
-  document.getElementById("mc-worst").innerText = m.worst_5pct_outcome_pct + "%";
+    const m = data.metrics;
+    document.getElementById("mc-exp").innerText =
+        m.expected_return_pct + "%";
+    document.getElementById("mc-loss").innerText =
+        m.probability_of_loss_pct + "%";
+    document.getElementById("mc-gain").innerText =
+        m.probability_of_5pct_gain_pct + "%";
+    document.getElementById("mc-worst").innerText =
+        m.worst_5pct_outcome_pct + "%";
 
-  const ctx = document.getElementById("mcChart").getContext("2d");
-  if (mcChart) mcChart.destroy();
+    const ctx = document.getElementById("mcChart").getContext("2d");
+    if (mcChart) mcChart.destroy();
 
-  mcChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: data.paths[0].map((_, i) => i),
-      datasets: data.paths.slice(0, 20).map(p => ({
-        data: p,
-        borderWidth: 1,
-        pointRadius: 0
-      }))
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: { x: { display: false } }
-    }
-  });
+    mcChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: data.paths[0].map((_, i) => i),
+            datasets: data.paths.slice(0, 20).map(p => ({
+                data: p,
+                borderWidth: 1,
+                pointRadius: 0
+            }))
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { x: { display: false } }
+        }
+    });
 }
 
 function closeMonteCarlo() {
-  document.getElementById("mc-modal").classList.add("hidden");
+    document.getElementById("mc-modal").classList.add("hidden");
+}
+
+/* 
+   PRICE CHART (Candlestick + Volume) — Lightweight Charts v4+
+    */
+
+let candleChart = null;
+// let volumeChart = null;
+
+async function openChart(symbol) {
+    document.getElementById("chart-modal").classList.remove("hidden");
+    document.getElementById("chart-title").innerText = `Chart: ${symbol}`;
+
+    const res = await fetch(`/api/chart/${symbol}`);
+    const data = await res.json();
+    if (!data || data.status !== "success") return;
+
+    const container = document.getElementById("chart-container");
+    container.innerHTML = "";
+
+    const chart = LightweightCharts.createChart(container, {
+        height: 520,
+        layout: {
+            background: { color: "#ffffff" },
+            textColor: "#111"
+        },
+        grid: {
+            vertLines: { visible: false },
+            horzLines: { visible: false }
+        },
+        rightPriceScale: {
+            scaleMargins: {
+                top: 0.1,
+                bottom: 0.5   
+            },
+            borderVisible: false
+        },
+        timeScale: {
+            borderVisible: false
+        }
+    });
+
+    /* ---- PRICE ---- */
+    const candleSeries = chart.addSeries(
+        LightweightCharts.CandlestickSeries
+    );
+    candleSeries.setData(data.candles);
+
+    /* ---- VOLUME (SAME CHART) ---- */
+    const volumeSeries = chart.addSeries(
+        LightweightCharts.HistogramSeries,
+        {
+            priceFormat: { type: "volume" },
+            priceScaleId: "",          
+            scaleMargins: {
+                top: 0.9,
+                bottom: 0
+            }
+        }
+    );
+
+    volumeSeries.setData(data.volume);
+}
+
+function closeChart() {
+    document.getElementById("chart-modal").classList.add("hidden");
 }
 </script>
+
 
 {% endblock %}
