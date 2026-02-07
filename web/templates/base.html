@@ -14,17 +14,21 @@
 <body>
 
 <header class="app-header">
-  <div>
+  <div class="nav-left">
     <div class="brand">QuantFusion</div>
     <div class="subtitle">AI-powered stock discovery for Indian markets</div>
   </div>
 
-  <nav class="nav-right">
+  <!-- Hamburger -->
+  <div class="nav-toggle" onclick="toggleNav()">☰</div>
+
+  <nav class="nav-right" id="navMenu">
     <a href="/">Home</a>
     <a href="/dashboard">Dashboard</a>
     <a href="/community">Community</a>
   </nav>
 </header>
+
 
 <main class="app-container">
   {% block content %}{% endblock %}
@@ -50,6 +54,11 @@
   </div>
 </footer>
 
+<script>
+function toggleNav() {
+  document.getElementById("navMenu").classList.toggle("active");
+}
+</script>
 
 </body>
 </html>

@@ -68,6 +68,52 @@ body {
 .nav-right a:hover {
   color: var(--primary);
 }
+/* ==================== NAVBAR RESPONSIVE ==================== */
+
+.nav-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-toggle {
+  display: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--text);
+  user-select: none;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+
+  .app-header {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .nav-toggle {
+    display: block;
+  }
+
+  .nav-right {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .nav-right a {
+    margin: 10px 0;
+    font-size: 14px;
+  }
+
+  .nav-right.active {
+    display: flex;
+  }
+}
+
 
 /*  PANELS / CARDS  */
 .panel,
