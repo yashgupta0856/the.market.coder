@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="panel" style="max-width:420px;margin:80px auto;">
+  <div style="text-align:center;margin-bottom:22px;">
+    <div class="hero-title">ACCESS EXPIRED</div>
+    <div class="hero-symbol" style="font-size:22px;">RENEW ACCESS</div>
+  </div>
+
+  <p style="text-align:center;color:var(--muted);margin-bottom:18px;">
+    Your 2-month community & dashboard access has expired.
+    <br>
+    Renew to continue using QuantFusion.
+  </p>
+
+  <p style="text-align:center;margin-bottom:14px;">
+    <strong>₹99</strong> · Unlock another <strong>2 months</strong>
+  </p>
+
+  <form method="post" action="/renew" enctype="multipart/form-data"
+        style="display:flex;flex-direction:column;gap:14px;">
+
+    <label style="font-family:var(--mono);font-size:11px;color:var(--muted);">
+      PAYMENT PROOF
+    </label>
+     <img src="/static/payment.jpeg" width="200" >
+    <input type="file" name="payment_proof" required>
+
+    <button type="submit" class="risk-btn">
+      RENEW ACCESS
+    </button>
+  </form>
+
+</section>
+
+{% endblock %}

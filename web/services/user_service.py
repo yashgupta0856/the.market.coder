@@ -12,8 +12,8 @@ def create_user(email: str, role: str = "user") -> dict:
         "role": role,
         "plan": "free",
         "access_expires_at": None,
-        "has_community_access": False,
-        "community_expires_at": None,
+        #"has_community_access": False,
+        #"community_expires_at": None,
         "created_at": datetime.now(timezone.utc),
         "last_login": None,
     }
@@ -74,8 +74,8 @@ def grant_community_access(email: str, months: int = 2):
         {"email": email},
         {
             "$set": {
-                "has_community_access": True,
-                "community_expires_at": expiry
+                #"has_community_access": True,
+                #"community_expires_at": expiry
             }
         }
     )

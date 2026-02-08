@@ -21,13 +21,24 @@
 
   <!-- Hamburger -->
   <div class="nav-toggle" onclick="toggleNav()">☰</div>
-
   <nav class="nav-right" id="navMenu">
     <a href="/">Home</a>
+    {% if request.session.get("user_email") %}
     <a href="/dashboard">Dashboard</a>
     <a href="/community">Community</a>
+    <a href="/logout">Logout</a>
+    {% else %}
+    <a href="/login">Login</a>
+    {% endif %}
   </nav>
 </header>
+<!-- {% if request.session.get("user_name") %}
+<div class="panel" style="margin-bottom:24px; text-align: center;">
+  <span class="subtitle">
+    Logged in as <strong>{{ request.session.get("user_name") }}</strong>
+  </span>
+</div>
+{% endif %} -->
 
 
 <main class="app-container">

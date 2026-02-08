@@ -16,22 +16,22 @@ def require_community_access(request: Request):
         {"email": email},
         {
             "_id": 0,
-            "has_community_access": 1,
-            "community_expires_at": 1
+            #"has_community_access": 1,
+            #"community_expires_at": 1
         }
     )
 
-    if not user or not user.get("has_community_access"):
+    if not user or not user.get(#"has_community_access"):
         return RedirectResponse("/payment-page", status_code=302)
 
-    expiry = user.get("community_expires_at")
+    expiry = user.get(#"community_expires_at")
     if not expiry:
         return RedirectResponse("/payment-page", status_code=302)
 
     if expiry < datetime.now(timezone.utc):
         users.update_one(
             {"email": email},
-            {"$set": {"has_community_access": False}}
+            {"$set": {#"has_community_access": False}}
         )
         return RedirectResponse("/payment-page", status_code=302)
 

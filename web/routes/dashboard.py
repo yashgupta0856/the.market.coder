@@ -12,8 +12,10 @@ from web.services.stock_service import (
 )
 from web.services.explainability_service import get_rank1_stock_explanation
 from web.services.sector_rotation_service import get_top_rotating_sectors
-from web.services.backtest_service import get_backtest_summary
 from web.services.monte_carlo_service import get_monte_carlo_for_symbol
+
+from fastapi.responses import RedirectResponse
+from web.services.access_control import user_has_active_access
 
 router = APIRouter()
 templates = Jinja2Templates(directory="web/templates")
@@ -31,6 +33,16 @@ def home(request: Request):
 # Dashboard
 @router.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
+
+    email = request.session.get("user_email")
+    if not email:
+        return RedirectResponse("/login", status_code=302)
+
+    if not user_has_active_access(email):
+        return RedirectResponse("/renew", status_code=302)
+
+
+
     system_stats = get_system_stats()
     sector_cards = get_top_sectors_by_regime()
     ranked_stocks = get_ranked_vcp_stocks(limit=100)
@@ -38,7 +50,6 @@ def dashboard(request: Request):
     sector_vcp_counts = get_sector_wise_vcp_counts(limit=10)
     remaining_vcp_stocks = get_remaining_vcp_symbols()
     rotating_sectors = get_top_rotating_sectors(limit=10)
-    backtest_summary = get_backtest_summary()
 
     mc_data = None
     if rank1_left:
@@ -56,7 +67,6 @@ def dashboard(request: Request):
             "sector_vcp_counts": sector_vcp_counts,
             "remaining_vcp_stocks": remaining_vcp_stocks,
             "rotating_sectors": rotating_sectors,
-            "backtest_summary": backtest_summary,
             "mc_data": mc_data,   
         }
     )
