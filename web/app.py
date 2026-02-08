@@ -11,18 +11,18 @@ from web.routes.auth import router as auth_router
 
 from web.routes import api_chart 
 
-app = FastAPI(title="QuantFusion — VCP Market Intelligence")
+app = FastAPI(title="the.market.coder — VCP Market Intelligence")
 
 
 # SESSION MIDDLEWARE
 
 
-SECRET_KEY = os.getenv("SESSION_SECRET", "quantfusion-secret")
+SECRET_KEY = os.getenv("SESSION_SECRET", "the.market.coder-secret")
 
 app.add_middleware(
     SessionMiddleware,
     secret_key=SECRET_KEY,
-    session_cookie="quantfusion_session",
+    session_cookie="the.market.coder_session",
     max_age=60 * 60 * 24 * 7  # 7 days
 )
 

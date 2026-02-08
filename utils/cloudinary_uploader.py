@@ -12,7 +12,7 @@ cloudinary.config(
 def upload_image(file):
     result = cloudinary.uploader.upload(
         file,
-        folder="quantfusion/community",
+        folder="the.market.coder/community",
         resource_type="image"
     )
     return result["secure_url"]

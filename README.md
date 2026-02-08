@@ -1,6 +1,6 @@
-# QuantFusion — VCP Market Intelligence Platform
+# the.market.coder — VCP Market Intelligence Platform
 
-QuantFusion is a research-grade, end-to-end quantitative equity analysis system focused on identifying Volatility Contraction Pattern (VCP) stocks and ranking them using sector intelligence and sector rotation.
+the.market.coder is a research-grade, end-to-end quantitative equity analysis system focused on identifying Volatility Contraction Pattern (VCP) stocks and ranking them using sector intelligence and sector rotation.
 
 This project is designed as a production-style institutional research system.
 

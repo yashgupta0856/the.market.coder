@@ -71,7 +71,7 @@ async def create_community_post(
         "target": target,
         "commentary": commentary,
         "image_path": image_url,
-        "author": "QuantFusion"
+        "author": "the.market.coder"
     })
 
     return {
