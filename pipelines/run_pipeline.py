@@ -26,6 +26,13 @@ def main():
     from pipelines.build_fusion import run_phase5_pipeline
     run_phase5_pipeline()
 
+
+    print("Running Phase 6 — Sniper Scanner")
+    from pipelines.build_sniper_candidates import run_sniper_pipeline
+    run_sniper_pipeline()
+
+    
+
     print("All pipelines completed successfully")
 
     print("Running Monte Carlo Risk Simulation")

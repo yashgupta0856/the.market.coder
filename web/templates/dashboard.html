@@ -1,9 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- 
-PAGE HEADER
- -->
+<!-- ================= PAGE HEADER ================= -->
 <section style="margin-bottom:32px;">
   <h1>Market Dashboard</h1>
   <p class="subtitle">
@@ -11,11 +9,8 @@ PAGE HEADER
   </p>
 </section>
 
-<!-- 
-ZONE 2: SECTOR INTELLIGENCE (RELATIVE STRENGTH)
- -->
+<!-- ================= SECTOR INTELLIGENCE ================= -->
 <section class="sector-row">
-
   {% for title, key in [
     ("Leading Sectors","leading"),
     ("Improving Sectors","improving"),
@@ -37,7 +32,6 @@ ZONE 2: SECTOR INTELLIGENCE (RELATIVE STRENGTH)
 
   <div class="panel sector-card">
     <h4>Sector-wise VCP Counts</h4>
-    {% if sector_vcp_counts %}
     <ul>
       {% for row in sector_vcp_counts %}
       <li>
@@ -46,19 +40,11 @@ ZONE 2: SECTOR INTELLIGENCE (RELATIVE STRENGTH)
       </li>
       {% endfor %}
     </ul>
-    {% else %}
-    <p class="subtitle">No VCP-qualified stocks</p>
-    {% endif %}
   </div>
-
 </section>
 
-<!-- 
-SECTOR ROTATION (CAPITAL WEIGHTED)
- -->
-
+<!-- ================= SECTOR ROTATION ================= -->
 <section class="panel rotation-panel">
-
   <div class="rotation-header">
     Sector Rotation — Capital Weighted
     <span class="rotation-sub">(Rank #1 = strongest leadership)</span>
@@ -66,88 +52,88 @@ SECTOR ROTATION (CAPITAL WEIGHTED)
 
   <div class="rotation-grid">
     {% for row in rotating_sectors %}
-      <div class="rotation-item
-        {% if row.rotation_rank <= 3 %}
-          rotation-strong
-        {% elif row.rotation_rank >= 8 %}
-          rotation-weak
-          {% else %}
-    rotation-neutral
-        {% endif %}
-      ">
-        <span class="rotation-sector">
-          {{ row.sector_index }}
-        </span>
-
-        <span class="rotation-rank">
-          #{{ row.rotation_rank }}
-        </span>
-      </div>
+    <div class="rotation-item
+      {% if row.rotation_rank <= 3 %}
+        rotation-strong
+      {% elif row.rotation_rank >= 8 %}
+        rotation-weak
+      {% else %}
+        rotation-neutral
+      {% endif %}
+    ">
+      <span>{{ row.sector_index }}</span>
+      <span class="rotation-rank">#{{ row.rotation_rank }}</span>
+    </div>
     {% endfor %}
   </div>
-
 </section>
 
+<!-- ================= TOGGLE ================= -->
+<div class="scanner-toggle">
+  <button
+    id="btn-vcp"
+    class="scanner-btn active"
+    onclick="showVCP()">
+    VCP Scanner
+  </button>
 
-<!-- 
-ZONE 1: PRIMARY MARKET CONTEXT (RANK #1 EXPLAINABILITY)
- -->
-<section class="market-hero">
+  <button
+    id="btn-sniper"
+    class="scanner-btn"
+    onclick="showSniper()">
+    Sniper Scanner
+  </button>
+</div>
 
-  <div class="market-hero-header">
-    <div class="hero-title">Primary Market Context</div>
-    <div class="hero-symbol">
-      {{ rank1_left.symbol if rank1_left else "—" }}
-      <span class="hero-rank">#1</span>
-    </div>
-  </div>
 
-  <div class="market-hero-grid">
+<!-- ================= VCP MODE ================= -->
+<div id="mode-vcp" class="mode-section active">
 
-    <div class="hero-panel">
-      <h4>Model Conviction</h4>
-      {% for label, value in [
-        ("Trend Strength", rank1_left.trend_strength),
-        ("Momentum", rank1_left.momentum),
-        ("Volatility Tightness", rank1_left.volatility_tightness)
-      ] %}
-      <div class="hero-metric">
-        <span class="metric-name">{{ label }}</span>
-        <span class="metric-value">{{ "%.2f"|format(value) }}</span>
+  <!-- ===== RANK #1 EXPLAINABILITY ===== -->
+  <section class="market-hero">
+    <div class="market-hero-header">
+      <div class="hero-title">Primary Market Context</div>
+      <div class="hero-symbol">
+        {{ rank1_left.symbol if rank1_left else "—" }}
+        <span class="hero-rank">#1</span>
       </div>
-      {% endfor %}
     </div>
 
-    <div class="hero-panel">
-      <h4>Structural Validation</h4>
-      {% for gate in [
-        ("Trend Gate", rank1_right.trend_gate),
-        ("Volatility Gate", rank1_right.volatility_gate),
-        ("Price Tightness", rank1_right.price_tightness_gate),
-        ("Volume Dry-Up", rank1_right.volume_dryup_gate)
-      ] %}
-      <div class="hero-gate">
-        <span class="gate-name">{{ gate[0] }}</span>
-        <span class="badge">{{ gate[1] }}</span>
+    <div class="market-hero-grid">
+      <div class="hero-panel">
+        <h4>Model Conviction</h4>
+        {% for label, value in [
+          ("Trend Strength", rank1_left.trend_strength),
+          ("Momentum", rank1_left.momentum),
+          ("Volatility Tightness", rank1_left.volatility_tightness)
+        ] %}
+        <div class="hero-metric">
+          <span>{{ label }}</span>
+          <span>{{ "%.2f"|format(value) }}</span>
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
+
+      <div class="hero-panel">
+        <h4>Structural Validation</h4>
+        {% for gate in [
+          ("Trend Gate", rank1_right.trend_gate),
+          ("Volatility Gate", rank1_right.volatility_gate),
+          ("Price Tightness", rank1_right.price_tightness_gate),
+          ("Volume Dry-Up", rank1_right.volume_dryup_gate)
+        ] %}
+        <div class="hero-gate">
+          <span>{{ gate[0] }}</span>
+          <span class="badge">{{ gate[1] }}</span>
+        </div>
+        {% endfor %}
+      </div>
     </div>
+  </section>
 
-  </div>
-</section>
-
-<!-- 
-ZONE 3: SNAPSHOT + RANKED TABLE
- -->
-<section class="rank-zone-full">
-
- 
-
+  <!-- ===== RANKED VCP TABLE ===== -->
   <div class="panel rank-panel">
-    <div class="rank-header">
-      <h2>Ranked VCP Stocks</h2>
-      <span class="subtitle">(highest conviction first)</span>
-    </div>
+    <h2>Ranked VCP Stocks</h2>
 
     <div class="rank-table-scroll">
       <table class="rank-table">
@@ -157,7 +143,7 @@ ZONE 3: SNAPSHOT + RANKED TABLE
             <th>Symbol</th>
             <th>CMP</th>
             <th>Risk</th>
-            <th>View Chart</th>
+            <th>Chart</th>
           </tr>
         </thead>
         <tbody>
@@ -167,14 +153,12 @@ ZONE 3: SNAPSHOT + RANKED TABLE
             <td class="rank-symbol">{{ s.symbol }}</td>
             <td>{{ "%.2f"|format(s.close) }}</td>
             <td>
-              <button class="risk-btn btn-primary" onclick="openMonteCarlo('{{ s.symbol }}')">
-                View
-              </button>
+              <button class="risk-btn btn-primary"
+                onclick="openMonteCarlo('{{ s.symbol }}')">Risk</button>
             </td>
             <td>
-              <button class="risk-btn btn-secondary" onclick="openChart('{{ s.symbol }}')">
-                View
-              </button>
+              <button class="risk-btn btn-secondary"
+                onclick="openChart('{{ s.symbol }}')">Chart</button>
             </td>
           </tr>
           {% endfor %}
@@ -183,204 +167,166 @@ ZONE 3: SNAPSHOT + RANKED TABLE
     </div>
   </div>
 
-</section>
+  <!-- ===== OTHER VCP ===== -->
+  <section class="panel residual-panel section-gap">
+    <h3>Other VCP-Qualified Stocks</h3>
+    <div class="residual-scroll">
+      <div class="residual-grid">
+        {% for sym in remaining_vcp_stocks %}
+        <div class="residual-item">{{ sym }}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
 
-<!-- 
-ZONE 4: OTHER VCP STOCKS
- -->
-<section class="panel residual-panel">
-  <div class="residual-header">
-    Other VCP-Qualified Stocks
-    <span class="subtitle">(passed structure, below ranking cutoff)</span>
-  </div>
+</div>
 
-<div class="residual-scroll">
-  <div class="residual-grid">
-    {% for sym in remaining_vcp_stocks %}
-      <div class="residual-item">{{ sym }}</div>
-    {% endfor %}
+<!-- ================= SNIPER MODE ================= -->
+<div id="mode-sniper" class="mode-section">
+  <div class="panel rank-panel">
+    <h2>Sniper Stocks</h2>
+
+    <div class="rank-table-scroll">
+      <table class="rank-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Symbol</th>
+            <th>Price</th>
+            <th>Chart</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sniper_stocks %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="rank-symbol">{{ s.symbol }}</td>
+            <td class="rank-symbol">{{ s.price }}</td>
+            <td>
+              <button class="risk-btn btn-secondary"
+                onclick="openChart('{{ s.symbol }}')">Chart</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-
-</section>
-
-
-
-
-
-<!-- 
-MONTE CARLO MODAL (UNCHANGED LOGIC)
- -->
+<!-- ================= MONTE CARLO MODAL ================= -->
 <div id="mc-modal" class="mc-modal hidden">
   <div class="mc-content">
     <div class="mc-header">
-      <span>Monte Carlo Risk Simulation (5 Days)</span>
-      <span class="mc-close" onclick="closeMonteCarlo()">×</span>
+      <span>Monte Carlo Risk Simulation</span>
+      <span onclick="closeMonteCarlo()">×</span>
     </div>
 
-    <div class="mc-symbol" id="mc-symbol"></div>
+    <div id="mc-symbol" class="mc-symbol"></div>
 
-   <div class="mc-metrics">
-  <div class="mc-row">
-    <span>Expected Return</span>
-    <span id="mc-exp" class="mc-value"></span>
-  </div>
-  <div class="mc-row">
-    <span>Probability of Loss</span>
-    <span id="mc-loss" class="mc-value"></span>
-  </div>
-  <div class="mc-row">
-    <span>Probability of +5% Gain</span>
-    <span id="mc-gain" class="mc-value"></span>
-  </div>
-  <div class="mc-row">
-    <span>Worst 5% Outcome</span>
-    <span id="mc-worst" class="mc-value"></span>
-  </div>
-</div>
-
+    <div class="mc-metrics">
+      <div class="mc-row"><span>Expected Return</span><span id="mc-exp" class="mc-value"></span></div>
+      <div class="mc-row"><span>Probability of Loss</span><span id="mc-loss" class="mc-value"></span></div>
+      <div class="mc-row"><span>Probability of +5%</span><span id="mc-gain" class="mc-value"></span></div>
+      <div class="mc-row"><span>Worst 5%</span><span id="mc-worst" class="mc-value"></span></div>
+    </div>
 
     <canvas id="mcChart" height="160"></canvas>
   </div>
 </div>
 
-
-<!-- CHART MODAL (SAME STRUCTURE AS MONTE CARLO) -->
+<!-- ================= PRICE CHART MODAL ================= -->
 <div id="chart-modal" class="mc-modal hidden">
   <div class="mc-content wide">
-
     <div class="mc-header">
-      <span id="chart-title">Price Chart</span>
-      <span class="mc-close" onclick="closeChart()">×</span>
+      <span id="chart-title"></span>
+      <span onclick="closeChart()">×</span>
     </div>
-
-    <div id="chart-container" style="height:420px;"></div>
-    <!-- <div id="volume-container" style="height:160px;margin-top:12px;"></div> -->
-
+    <div id="chart-container"></div>
   </div>
 </div>
 
-
-
-<!-- 
-JS 
- -->
+<!-- ================= FULL JS ================= -->
 <script>
-/* 
-   MONTE CARLO RISK SIMULATION (Chart.js)
-    */
+/* ---------- MODE TOGGLE ---------- */
+function showVCP() {
+  document.getElementById("mode-vcp").classList.add("active");
+  document.getElementById("mode-sniper").classList.remove("active");
 
+  document.getElementById("btn-vcp").classList.add("active");
+  document.getElementById("btn-sniper").classList.remove("active");
+}
+
+function showSniper() {
+  document.getElementById("mode-vcp").classList.remove("active");
+  document.getElementById("mode-sniper").classList.add("active");
+
+  document.getElementById("btn-sniper").classList.add("active");
+  document.getElementById("btn-vcp").classList.remove("active");
+}
+
+document.addEventListener("DOMContentLoaded", showVCP);
+
+
+/* ---------- MONTE CARLO ---------- */
 let mcChart = null;
 
 async function openMonteCarlo(symbol) {
-    document.getElementById("mc-modal").classList.remove("hidden");
-    document.getElementById("mc-symbol").innerText = "Symbol: " + symbol;
+  document.getElementById("mc-modal").classList.remove("hidden");
+  document.getElementById("mc-symbol").innerText = "Symbol: " + symbol;
 
-    const res = await fetch(`/api/monte-carlo/${symbol}`);
-    const data = await res.json();
-    if (!data || data.status !== "success") return;
+  const res = await fetch(`/api/monte-carlo/${symbol}`);
+  const data = await res.json();
+  if (!data || data.status !== "success") return;
 
-    const m = data.metrics;
-    document.getElementById("mc-exp").innerText =
-        m.expected_return_pct + "%";
-    document.getElementById("mc-loss").innerText =
-        m.probability_of_loss_pct + "%";
-    document.getElementById("mc-gain").innerText =
-        m.probability_of_5pct_gain_pct + "%";
-    document.getElementById("mc-worst").innerText =
-        m.worst_5pct_outcome_pct + "%";
+  document.getElementById("mc-exp").innerText = data.metrics.expected_return_pct + "%";
+  document.getElementById("mc-loss").innerText = data.metrics.probability_of_loss_pct + "%";
+  document.getElementById("mc-gain").innerText = data.metrics.probability_of_5pct_gain_pct + "%";
+  document.getElementById("mc-worst").innerText = data.metrics.worst_5pct_outcome_pct + "%";
 
-    const ctx = document.getElementById("mcChart").getContext("2d");
-    if (mcChart) mcChart.destroy();
+  const ctx = document.getElementById("mcChart").getContext("2d");
+  if (mcChart) mcChart.destroy();
 
-    mcChart = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: data.paths[0].map((_, i) => i),
-            datasets: data.paths.slice(0, 20).map(p => ({
-                data: p,
-                borderWidth: 1,
-                pointRadius: 0
-            }))
-        },
-        options: {
-            plugins: { legend: { display: false } },
-            scales: { x: { display: false } }
-        }
-    });
+  mcChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: data.paths[0].map((_, i) => i),
+      datasets: data.paths.slice(0, 25).map(p => ({
+        data: p, borderWidth: 1, pointRadius: 0
+      }))
+    },
+    options: { plugins: { legend: { display: false } }, scales: { x: { display: false } } }
+  });
 }
-
 function closeMonteCarlo() {
-    document.getElementById("mc-modal").classList.add("hidden");
+  document.getElementById("mc-modal").classList.add("hidden");
 }
 
-/* 
-   PRICE CHART (Candlestick + Volume) — Lightweight Charts v4+
-    */
-
-let candleChart = null;
-// let volumeChart = null;
-
+/* ---------- PRICE CHART ---------- */
 async function openChart(symbol) {
-    document.getElementById("chart-modal").classList.remove("hidden");
-    document.getElementById("chart-title").innerText = `Chart: ${symbol}`;
+  document.getElementById("chart-modal").classList.remove("hidden");
+  document.getElementById("chart-title").innerText = "Chart: " + symbol;
 
-    const res = await fetch(`/api/chart/${symbol}`);
-    const data = await res.json();
-    if (!data || data.status !== "success") return;
+  const res = await fetch(`/api/chart/${symbol}`);
+  const data = await res.json();
+  if (!data || data.status !== "success") return;
 
-    const container = document.getElementById("chart-container");
-    container.innerHTML = "";
+  const container = document.getElementById("chart-container");
+  container.innerHTML = "";
 
-    const chart = LightweightCharts.createChart(container, {
-        height: 520,
-        layout: {
-            background: { color: "#ffffff" },
-            textColor: "#111"
-        },
-        grid: {
-            vertLines: { visible: false },
-            horzLines: { visible: false }
-        },
-        rightPriceScale: {
-            scaleMargins: {
-                top: 0.1,
-                bottom: 0.5   
-            },
-            borderVisible: false
-        },
-        timeScale: {
-            borderVisible: false
-        }
-    });
+  const chart = LightweightCharts.createChart(container, {
+    height: 520,
+    layout: { background: { color: "#0b0f14" }, textColor: "#e5e7eb" }
+  });
 
-    /* ---- PRICE ---- */
-    const candleSeries = chart.addSeries(
-        LightweightCharts.CandlestickSeries
-    );
-    candleSeries.setData(data.candles);
-
-    /* ---- VOLUME (SAME CHART) ---- */
-    const volumeSeries = chart.addSeries(
-        LightweightCharts.HistogramSeries,
-        {
-            priceFormat: { type: "volume" },
-            priceScaleId: "",          
-            scaleMargins: {
-                top: 0.9,
-                bottom: 0
-            }
-        }
-    );
-
-    volumeSeries.setData(data.volume);
+  chart.addSeries(LightweightCharts.CandlestickSeries).setData(data.candles);
+  chart.addSeries(LightweightCharts.HistogramSeries,
+    { priceFormat: { type: "volume" }, priceScaleId: "" }
+  ).setData(data.volume);
 }
-
 function closeChart() {
-    document.getElementById("chart-modal").classList.add("hidden");
+  document.getElementById("chart-modal").classList.add("hidden");
 }
 </script>
-
 
 {% endblock %}
