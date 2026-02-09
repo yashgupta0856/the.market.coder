@@ -193,6 +193,7 @@
             <th>Rank</th>
             <th>Symbol</th>
             <th>Price</th>
+            <th>Score</th>
             <th>Chart</th>
           </tr>
         </thead>
@@ -205,6 +206,7 @@
             <td class="rank-symbol">{{ s.symbol }}</td>
 
             <td>{{ "%.2f"|format(s.price) }}</td>
+            <td>{{ s.sniper_score }}</td>
 
             <td>
               <button

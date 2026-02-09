@@ -38,7 +38,7 @@ async def signup_user(
 
     image_url = upload_image(payment_proof.file)
 
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=1)
+    expires_at = datetime.now(timezone.utc) + timedelta(weeks=4)
 
     users.insert_one({
         "name": name,
