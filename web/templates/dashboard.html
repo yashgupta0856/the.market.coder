@@ -190,21 +190,28 @@
       <table class="rank-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th>Rank</th>
             <th>Symbol</th>
             <th>Price</th>
             <th>Chart</th>
           </tr>
         </thead>
         <tbody>
-          {% for s in sniper_stocks %}
+          {% for s in sniper_ranked %}
           <tr>
-            <td>{{ loop.index }}</td>
+            <!-- REAL RANK FROM DB -->
+            <td><strong>#{{ s.rank }}</strong></td>
+
             <td class="rank-symbol">{{ s.symbol }}</td>
-            <td class="rank-symbol">{{ s.price }}</td>
+
+            <td>{{ "%.2f"|format(s.price) }}</td>
+
             <td>
-              <button class="risk-btn btn-secondary"
-                onclick="openChart('{{ s.symbol }}')">Chart</button>
+              <button
+                class="risk-btn btn-secondary"
+                onclick="openChart('{{ s.symbol }}')">
+                Chart
+              </button>
             </td>
           </tr>
           {% endfor %}

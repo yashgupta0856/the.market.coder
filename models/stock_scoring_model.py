@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -40,3 +41,53 @@ def compute_stock_score(df: pd.DataFrame) -> pd.DataFrame:
     scored = scored.sort_values("rank")
 
     return scored
+
+
+
+
+
+def clamp(x, low=0.0, high=1.0):
+    return max(low, min(high, x))
+
+
+def compute_sniper_score(df):
+    """
+    df = symbol-level OHLCV dataframe (sorted by date)
+    """
+
+    latest = df.iloc[-1]
+
+    #  MOMENTUM (40%) 
+    if len(df) < 21:
+        return None
+
+    close_20 = df.iloc[-21]["close"]
+    momentum_20 = (latest["close"] / close_20) - 1
+    momentum_score = clamp(momentum_20 / 0.15)  # 15% = strong move
+
+    #  TREND (30%) 
+    trend_conditions = [
+        latest["close"] > latest["ema_20"],
+        latest["close"] > latest["ema_50"],
+        latest["ema_20"] > latest["ema_50"],
+    ]
+    trend_score = sum(trend_conditions) / 3
+
+    #  VOLUME (30%) 
+    recent_vol = df["volume"].iloc[-5:].mean()
+    base_vol = df["volume"].iloc[-30:].mean()
+
+    if base_vol == 0:
+        return None
+
+    volume_ratio = recent_vol / base_vol
+    volume_score = clamp((volume_ratio - 1) / 0.5)
+
+    #  FINAL SCORE 
+    final_score = (
+        0.4 * momentum_score +
+        0.3 * trend_score +
+        0.3 * volume_score
+    )
+
+    return round(final_score * 100, 2)

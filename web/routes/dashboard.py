@@ -13,7 +13,7 @@ from web.services.stock_service import (
 from web.services.explainability_service import get_rank1_stock_explanation
 from web.services.sector_rotation_service import get_top_rotating_sectors
 from web.services.monte_carlo_service import get_monte_carlo_for_symbol
-from web.services.sniper_service import get_sniper_stocks
+from web.services.sniper_service import get_sniper_stocks,get_ranked_sniper_stocks
 
 from fastapi.responses import RedirectResponse
 from web.services.access_control import user_has_active_access
@@ -52,6 +52,7 @@ def dashboard(request: Request):
     remaining_vcp_stocks = get_remaining_vcp_symbols()
     rotating_sectors = get_top_rotating_sectors(limit=10)
     sniper_stocks = get_sniper_stocks(limit=2000)
+    sniper_ranked = get_ranked_sniper_stocks(limit=2000)
 
     mc_data = None
     if rank1_left:
@@ -70,6 +71,7 @@ def dashboard(request: Request):
             "remaining_vcp_stocks": remaining_vcp_stocks,
             "rotating_sectors": rotating_sectors,
             "mc_data": mc_data,   
-            "sniper_stocks":sniper_stocks
+            "sniper_stocks":sniper_stocks,
+            "sniper_ranked":sniper_ranked
         }
     )
