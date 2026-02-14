@@ -6,7 +6,6 @@ from sectors.sector_indicators import (
 )
 
 from sectors.sector_strength import (
-    load_sector_and_benchmark,
     compute_raw_rs,
     normalize_and_score
 )
@@ -15,10 +14,8 @@ from sectors.sector_regime import classify_sector_regimes
 from sectors.build_benchmarks_indicators import run_benchmark_pipeline
 
 from configs.data_sources import DEFAULT_START_DATE
-from utils.mongo_loader import csv_to_mongo
+from utils.mongo import get_collection
 
-
-# CONFIG
 
 SECTORS = [
     "CNXAUTO", "CNXIT", "CNXFMCG", "CNXFIN",
@@ -27,15 +24,22 @@ SECTORS = [
     "CNXPSUBANK", "CNXSERVICE"
 ]
 
-SECTOR_INDICATORS_PATH = "data/processed/sector_indicators.csv"
-SECTOR_STRENGTH_PATH   = "data/processed/sector_strength.csv"
-SECTOR_REGIME_PATH     = "data/processed/sector_regime.csv"
-BENCHMARK_PATH         = "data/processed/benchmark_indicators.csv"
+
+def df_to_mongo(df, collection_name, clear_existing=True):
+    col = get_collection(collection_name)
+
+    if clear_existing:
+        col.delete_many({})
+
+    if not df.empty:
+        col.insert_many(df.to_dict(orient="records"))
 
 
-# PHASE 4.2 — Sector Indicators
+def run_phase4():
+    print("Running Benchmark Pipeline")
+    run_benchmark_pipeline()
 
-def run_phase4_2():
+    #  Sector Indicators 
     frames = []
 
     for sector in SECTORS:
@@ -43,58 +47,32 @@ def run_phase4_2():
         enriched = compute_sector_indicators(ohlcv)
         frames.append(enriched)
 
-    final_df = pd.concat(frames, ignore_index=True)
-    final_df.to_csv(SECTOR_INDICATORS_PATH, index=False)
+    sector_df = pd.concat(frames, ignore_index=True)
 
-    csv_to_mongo(
-        SECTOR_INDICATORS_PATH,
-        "sector_indicators"
+    df_to_mongo(sector_df, "sector_indicators")
+
+    #  Sector Strength 
+    latest_date = sector_df["date"].max()
+    sector_latest = sector_df[sector_df["date"] == latest_date]
+
+    benchmark_col = get_collection("benchmark_indicators")
+    benchmark_df = pd.DataFrame(
+        list(benchmark_col.find({}, {"_id": 0}))
     )
 
-    return final_df
+    benchmark_df["date"] = pd.to_datetime(benchmark_df["date"])
+    benchmark_latest = benchmark_df[
+        benchmark_df["date"] == latest_date
+    ]
 
-
-# PHASE 4.3 — Sector Strength
-
-def run_phase4_3():
-    sector_latest, benchmark_latest = load_sector_and_benchmark(
-        SECTOR_INDICATORS_PATH,
-        BENCHMARK_PATH
-    )
-
-    rs_raw   = compute_raw_rs(sector_latest, benchmark_latest)
+    rs_raw = compute_raw_rs(sector_latest, benchmark_latest)
     rs_final = normalize_and_score(rs_raw)
 
-    rs_final.to_csv(SECTOR_STRENGTH_PATH, index=False)
+    df_to_mongo(rs_final, "sector_strength")
 
-    csv_to_mongo(
-        SECTOR_STRENGTH_PATH,
-        "sector_strength"
-    )
-
-    return rs_final
-
-
-# PHASE 4 — MASTER PIPELINE
-
-def run_phase4():
-    print("Running Benchmark Indicator Pipeline")
-    run_benchmark_pipeline()
-
-    print("Running Phase 4.2 — Sector Indicator Computation")
-    run_phase4_2()
-
-    print("Running Phase 4.3 — Sector Relative Strength")
-    rs_df = run_phase4_3()
-
-    print("Running Phase 4.4 — Sector Regime Classification")
-    regime_df = classify_sector_regimes(rs_df)
-    regime_df.to_csv(SECTOR_REGIME_PATH, index=False)
-
-    csv_to_mongo(
-        SECTOR_REGIME_PATH,
-        "sector_regime"
-    )
+    #  Sector Regime 
+    regime_df = classify_sector_regimes(rs_final)
+    df_to_mongo(regime_df, "sector_regime")
 
     print("Phase 4 completed successfully")
 

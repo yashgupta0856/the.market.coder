@@ -1,141 +1,170 @@
 import pandas as pd
-from pathlib import Path
-
-from features.stock_sector_fusion import fuse_stock_with_sector
 from features.stock_filtering import filter_vcp_with_sector
 from models.stock_scoring_model import compute_stock_score
 from sectors.sector_rotation import build_sector_rotation
-
 from utils.mongo import get_collection
-from utils.mongo_loader import csv_to_mongo
 
 
-# PATH CONFIGURATION (TEMP CSVs KEPT)
 
-STOCK_INDICATORS_PATH = "data/processed/indicators/equity_indicators.csv"
-VCP_PATH              = "data/processed/vcp_candidates.csv"
-SECTOR_REGIME_PATH    = "data/processed/sector_regime.csv"
-STOCK_SECTOR_MAP_PATH = "data/reference/stock_sector_mapping.csv"
-
-SECTOR_ROTATION_PATH  = "data/processed/sector_rotation.csv"
-
-FUSED_OUTPUT_PATH     = "data/processed/stock_sector_fused.csv"
-FILTERED_OUTPUT_PATH  = "data/processed/vcp_sector_filtered.csv"
-FINAL_OUTPUT_PATH     = "output/final_stock_scores.csv"
+# Mongo Helpers
 
 
-#  HELPERS (Mongo → CSV bridge) 
-
-def mongo_to_csv(collection_name: str, output_path: str):
+def mongo_to_df(collection_name: str) -> pd.DataFrame:
     col = get_collection(collection_name)
-    df = pd.DataFrame(list(col.find({}, {"_id": 0})))
-    df.to_csv(output_path, index=False)
-    return df
+    data = list(col.find({}, {"_id": 0}))
+    if not data:
+        return pd.DataFrame()
+    return pd.DataFrame(data)
 
 
-#  PHASE 5.1 — STOCK + SECTOR FUSION 
+def df_to_mongo(
+    df: pd.DataFrame,
+    collection_name: str,
+    clear_existing: bool = True,
+    batch_size: int = 1000
+):
+    if df is None or df.empty:
+        return 0
+
+    col = get_collection(collection_name)
+
+    if clear_existing:
+        col.delete_many({})
+
+    records = df.to_dict(orient="records")
+
+    for i in range(0, len(records), batch_size):
+        col.insert_many(records[i:i + batch_size])
+
+    return len(records)
+
+
+
+# PHASE 5.1 — STOCK + SECTOR FUSION
+
 
 def run_phase5_1() -> pd.DataFrame:
-    # READ FROM MONGODB
-    mongo_to_csv("equity_indicators", STOCK_INDICATORS_PATH)
-    mongo_to_csv("vcp_candidates", VCP_PATH)
-    mongo_to_csv("sector_regime", SECTOR_REGIME_PATH)
-    mongo_to_csv("stock_sector_mapping", STOCK_SECTOR_MAP_PATH)
+    print("Reading required collections from MongoDB...")
 
-    fused_df = fuse_stock_with_sector(
-        stock_indicators_path=STOCK_INDICATORS_PATH,
-        vcp_path=VCP_PATH,
-        sector_regime_path=SECTOR_REGIME_PATH,
-        stock_sector_map_path=STOCK_SECTOR_MAP_PATH,
+    stocks = mongo_to_df("equity_indicators")
+    vcp = mongo_to_df("vcp_candidates")
+    sector_regime = mongo_to_df("sector_regime")
+    mapping = mongo_to_df("stock_sector_mapping")
+
+    if stocks.empty:
+        raise RuntimeError("equity_indicators collection is empty")
+
+    # Use latest date only
+    stocks["date"] = pd.to_datetime(stocks["date"])
+    latest_date = stocks["date"].max()
+    stocks_latest = stocks[stocks["date"] == latest_date].copy()
+
+    # Merge VCP flag
+    stocks_latest = stocks_latest.merge(
+        vcp, on="symbol", how="left"
+    )
+    stocks_latest["vcp_candidate"] = (
+        stocks_latest["vcp_candidate"].fillna(False)
     )
 
-    fused_df.to_csv(FUSED_OUTPUT_PATH, index=False)
-
-    csv_to_mongo(
-        FUSED_OUTPUT_PATH,
-        "stock_sector_fused"
+    # Merge stock → sector mapping
+    stocks_latest = stocks_latest.merge(
+        mapping, on="symbol", how="left"
     )
 
-    return fused_df
+    # Merge sector regime
+    stocks_latest = stocks_latest.merge(
+        sector_regime,
+        on="sector_index",
+        how="left"
+    )
+
+    print("Storing stock_sector_fused in MongoDB...")
+    df_to_mongo(stocks_latest, "stock_sector_fused")
+
+    return stocks_latest
 
 
-#  PHASE 5.2 — VCP + SECTOR FILTERING 
+
+# PHASE 5.2 — VCP + SECTOR FILTERING
+
 
 def run_phase5_2(fused_df: pd.DataFrame) -> pd.DataFrame:
     filtered_df = filter_vcp_with_sector(fused_df)
-    filtered_df.to_csv(FILTERED_OUTPUT_PATH, index=False)
 
-    csv_to_mongo(
-        FILTERED_OUTPUT_PATH,
-        "vcp_sector_filtered"
-    )
+    print("Storing vcp_sector_filtered in MongoDB...")
+    df_to_mongo(filtered_df, "vcp_sector_filtered")
 
     return filtered_df
 
 
-#  SECTOR ROTATION BOOST 
+
+# SECTOR ROTATION BOOST
+
 
 def apply_sector_rotation_boost(stock_df: pd.DataFrame) -> pd.DataFrame:
-    if not Path(SECTOR_ROTATION_PATH).exists():
+    rotation_df = mongo_to_df("sector_rotation")
+
+    if rotation_df.empty:
         return stock_df
 
-    rot = pd.read_csv(SECTOR_ROTATION_PATH)
-
-    if not {"sector_index", "rotation_rank"}.issubset(rot.columns):
+    if not {"sector_index", "rotation_rank"}.issubset(rotation_df.columns):
         return stock_df
 
-    max_rank = rot["rotation_rank"].max()
+    max_rank = rotation_df["rotation_rank"].max()
 
-    rot["rotation_bonus"] = 1 - (rot["rotation_rank"] / max_rank)
-    rot["rotation_bonus"] = rot["rotation_bonus"].clip(0.0, 1.0)
+    rotation_df["rotation_bonus"] = (
+        1 - (rotation_df["rotation_rank"] / max_rank)
+    ).clip(0.0, 1.0)
 
     df = stock_df.merge(
-        rot[["sector_index", "rotation_bonus"]],
+        rotation_df[["sector_index", "rotation_bonus"]],
         on="sector_index",
         how="left"
     )
 
     df["rotation_bonus"] = df["rotation_bonus"].fillna(0.0)
 
-    df["stock_score"] = df["stock_score"] + (0.15 * df["rotation_bonus"])
+    df["stock_score"] = df["stock_score"] + (
+        0.15 * df["rotation_bonus"]
+    )
 
     return df
 
 
-#  PHASE 5.3 — STOCK SCORING & RANKING 
+
+# PHASE 5.3 — STOCK SCORING & RANKING
+
 
 def run_phase5_3(filtered_df: pd.DataFrame) -> pd.DataFrame:
     ranked_df = compute_stock_score(filtered_df)
 
     ranked_df = apply_sector_rotation_boost(ranked_df)
 
-    ranked_df = ranked_df.sort_values("stock_score", ascending=False)
-    ranked_df["rank"] = range(1, len(ranked_df) + 1)
+    ranked_df = ranked_df.sort_values(
+        "stock_score",
+        ascending=False
+    ).reset_index(drop=True)
 
-    ranked_df.to_csv(FINAL_OUTPUT_PATH, index=False)
+    ranked_df["rank"] = ranked_df.index + 1
 
-    csv_to_mongo(
-        FINAL_OUTPUT_PATH,
-        "final_stock_scores"
-    )
+    print("Storing final_stock_scores in MongoDB...")
+    df_to_mongo(ranked_df, "final_stock_scores")
 
     return ranked_df
 
 
-#  PIPELINE ENTRY POINT 
+
+# MASTER ENTRY POINT
 
 def run_phase5_pipeline():
     print("Starting Phase 5.1 — Stock Sector Fusion")
     fused_df = run_phase5_1()
 
-    print("Building Sector Rotation (from stock breadth)")
+    print("Building Sector Rotation")
     rotation_df = build_sector_rotation(window_col="roc_63")
-    rotation_df.to_csv(SECTOR_ROTATION_PATH, index=False)
 
-    csv_to_mongo(
-        SECTOR_ROTATION_PATH,
-        "sector_rotation"
-    )
+    df_to_mongo(rotation_df, "sector_rotation")
 
     print("Starting Phase 5.2 — VCP Sector Filtering")
     filtered_df = run_phase5_2(fused_df)
@@ -144,6 +173,7 @@ def run_phase5_pipeline():
     final_df = run_phase5_3(filtered_df)
 
     print("Phase 5 pipeline completed successfully")
+
     return final_df
 
 

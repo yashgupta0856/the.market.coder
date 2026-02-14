@@ -1,18 +1,12 @@
-# utils/mongo_loader.py
-
-import pandas as pd
 from utils.mongo import get_collection
 
-
-def csv_to_mongo(
-    csv_path: str,
+def df_to_mongo(
+    df,
     collection_name: str,
     clear_existing: bool = True,
     batch_size: int = 1000
 ):
-    df = pd.read_csv(csv_path)
-
-    if df.empty:
+    if df is None or df.empty:
         return 0
 
     col = get_collection(collection_name)

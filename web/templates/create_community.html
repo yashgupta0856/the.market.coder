@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="panel" style="max-width:700px;margin:60px auto;">
+
+  <div style="text-align:center;margin-bottom:24px;">
+    <div class="hero-title">ADMIN PANEL</div>
+    <div class="hero-symbol" style="font-size:22px;">
+      CREATE COMMUNITY POST
+    </div>
+  </div>
+
+  <form method="post"
+        action="/api/community/create"
+        enctype="multipart/form-data"
+        style="display:flex;flex-direction:column;gap:16px;">
+
+    <label class="form-label">Symbol</label>
+    <input type="text"
+           name="symbol"
+           required
+           placeholder="e.g. TCS"
+           class="form-input">
+
+    <label class="form-label">Entry Price</label>
+    <input type="text"
+           name="entry"
+           placeholder="Optional"
+           class="form-input">
+
+    <label class="form-label">Stop Loss</label>
+    <input type="text"
+           name="stop_loss"
+           placeholder="Optional"
+           class="form-input">
+
+    <label class="form-label">Target</label>
+    <input type="text"
+           name="target"
+           placeholder="Optional"
+           class="form-input">
+
+    <label class="form-label">Commentary</label>
+    <textarea name="commentary"
+              rows="6"
+              placeholder="Write detailed analysis..."
+              class="form-input"></textarea>
+
+    <label class="form-label">Upload Chart Image</label>
+    <input type="file"
+           name="image"
+           accept="image/*">
+
+    <button type="submit"
+            class="risk-btn"
+            style="margin-top:20px;">
+      PUBLISH COMMUNITY POST
+    </button>
+
+  </form>
+
+</section>
+
+{% endblock %}

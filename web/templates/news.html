@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section style="margin-bottom:40px;">
+  <h1 style="font-size:28px;margin-bottom:6px;">Market Intelligence Feed</h1>
+  <p class="subtitle">Latest insights, announcements & research notes</p>
+</section>
+
+<div class="news-grid">
+
+  {% for article in news %}
+  <div class="news-card">
+
+    {% if article.image_url %}
+    <div class="news-image">
+      <img src="{{ article.image_url }}" alt="{{ article.title }}">
+      <div class="news-overlay"></div>
+      {% if article.category %}
+        <span class="news-category">{{ article.category }}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="news-content">
+      <h3>
+        <a href="/news/{{ article.slug }}">
+          {{ article.title }}
+        </a>
+      </h3>
+
+      <p>{{ article.summary }}</p>
+
+      <a href="/news/{{ article.slug }}" class="news-read-btn">
+        Read Full Article →
+      </a>
+    </div>
+
+  </div>
+  {% endfor %}
+
+</div>
+
+{% endblock %}

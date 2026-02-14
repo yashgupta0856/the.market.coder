@@ -5,15 +5,21 @@ from scanners.sniper_scanner import scan_universe_sniper
 from indicators.moving_averages import ema
 
 
+def df_to_mongo(df, collection_name, clear_existing=True):
+    col = get_collection(collection_name)
+
+    if clear_existing:
+        col.delete_many({})
+
+    if not df.empty:
+        col.insert_many(df.to_dict(orient="records"))
+
+
 def clamp(x, low=0.0, high=1.0):
     return max(low, min(high, x))
 
 
-def compute_sniper_score(symbol_df: pd.DataFrame) -> float | None:
-    """
-    Compute Sniper score for ONE symbol dataframe
-    """
-
+def compute_sniper_score(symbol_df: pd.DataFrame):
     symbol_df = symbol_df.sort_values("date")
 
     if len(symbol_df) < 60:
@@ -21,16 +27,10 @@ def compute_sniper_score(symbol_df: pd.DataFrame) -> float | None:
 
     latest = symbol_df.iloc[-1]
 
-    
-    # 1️ MOMENTUM (40%)
-    
     close_20 = symbol_df.iloc[-21]["close"]
     momentum_20 = (latest["close"] / close_20) - 1
-    momentum_score = clamp(momentum_20 / 0.15)  # 15% move = strong
+    momentum_score = clamp(momentum_20 / 0.15)
 
-    
-    # 2️ TREND ALIGNMENT (30%)
-    
     trend_conditions = [
         latest["close"] > latest["ema_20"],
         latest["close"] > latest["ema_50"],
@@ -38,9 +38,6 @@ def compute_sniper_score(symbol_df: pd.DataFrame) -> float | None:
     ]
     trend_score = sum(trend_conditions) / 3
 
-    
-    # 3️ VOLUME STRENGTH (30%)
-    
     recent_vol = symbol_df["volume"].iloc[-5:].mean()
     base_vol = symbol_df["volume"].iloc[-30:].mean()
 
@@ -48,11 +45,8 @@ def compute_sniper_score(symbol_df: pd.DataFrame) -> float | None:
         return None
 
     volume_ratio = recent_vol / base_vol
-    volume_score = clamp((volume_ratio - 1) / 0.5)  # +50% = strong
+    volume_score = clamp((volume_ratio - 1) / 0.5)
 
-    
-    # FINAL SCORE
-    
     final_score = (
         0.4 * momentum_score +
         0.3 * trend_score +
@@ -63,56 +57,18 @@ def compute_sniper_score(symbol_df: pd.DataFrame) -> float | None:
 
 
 def run_sniper_pipeline():
-    """
-    Runs Sniper scanner + ranking and stores results in MongoDB
-    """
-
     ohlcv_col = get_collection("ohlcv_equities")
-    sniper_col = get_collection("sniper_candidates")
-    ranked_col = get_collection("sniper_ranked")
 
-    
-    # LOAD OHLCV
-    
     df = pd.DataFrame(
-        list(
-            ohlcv_col.find(
-                {},
-                {
-                    "_id": 0,
-                    "date": 1,
-                    "symbol": 1,
-                    "close": 1,
-                    "volume": 1,
-                }
-            )
-        )
+        list(ohlcv_col.find({}, {"_id": 0}))
     )
-
-    if df.empty:
-        raise RuntimeError("OHLCV collection is empty")
 
     df["date"] = pd.to_datetime(df["date"])
 
-    
-    # RUN SNIPER SCANNER
-    
     sniper_df = scan_universe_sniper(df)
 
-    sniper_col.delete_many({})
-    ranked_col.delete_many({})
+    df_to_mongo(sniper_df, "sniper_candidates")
 
-    if sniper_df.empty:
-        print("No sniper candidates found")
-        return
-
-    sniper_col.insert_many(
-        sniper_df.to_dict(orient="records")
-    )
-
-    
-    # RANK SNIPER CANDIDATES
-    
     ranked_records = []
 
     for symbol in sniper_df.loc[
@@ -120,22 +76,18 @@ def run_sniper_pipeline():
     ]:
         symbol_df = df[df["symbol"] == symbol].copy()
 
-        # Indicators
         symbol_df["ema_20"] = ema(symbol_df["close"], 20)
         symbol_df["ema_50"] = ema(symbol_df["close"], 50)
 
         score = compute_sniper_score(symbol_df)
 
-        if score is None:
-            continue
-
-        ranked_records.append({
-            "symbol": symbol,
-            "sniper_score": score
-        })
+        if score is not None:
+            ranked_records.append({
+                "symbol": symbol,
+                "sniper_score": score
+            })
 
     if not ranked_records:
-        print("No sniper stocks qualified for ranking")
         return
 
     ranked_df = (
@@ -146,15 +98,9 @@ def run_sniper_pipeline():
 
     ranked_df["rank"] = ranked_df.index + 1
 
-    ranked_col.insert_many(
-        ranked_df.to_dict(orient="records")
-    )
+    df_to_mongo(ranked_df, "sniper_ranked")
 
-    print(
-        f"Sniper scan complete → "
-        f"{sniper_df['sniper_candidate'].sum()} candidates | "
-        f"{len(ranked_df)} ranked"
-    )
+    print("Sniper pipeline completed.")
 
 
 if __name__ == "__main__":

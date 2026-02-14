@@ -1,26 +1,51 @@
 import pandas as pd
-from pathlib import Path
-
-
-INDICATORS_PATH = "data/processed/stock_sector_fused.csv"
-BENCHMARK_PATH  = "data/processed/benchmark_indicators.csv"
+from utils.mongo import get_collection
 
 
 
-# Sector Breadth
+# HELPERS — LOAD FROM MONGODB
 
 
-def compute_sector_breadth(window_col="roc_63"):
-    """
-    Sector breadth = % of stocks with positive returns
-    """
-    if not Path(INDICATORS_PATH).exists():
-        raise FileNotFoundError(
-            "stock_sector_fused.csv not found. "
+def load_stock_sector_fused():
+    col = get_collection("stock_sector_fused")
+
+    data = list(col.find({}, {"_id": 0}))
+
+    if not data:
+        raise RuntimeError(
+            "stock_sector_fused collection is empty. "
             "Run Phase 5.1 before sector rotation."
         )
 
-    df = pd.read_csv(INDICATORS_PATH)
+    df = pd.DataFrame(data)
+    df["date"] = pd.to_datetime(df["date"])
+
+    return df
+
+
+def load_benchmark_indicators():
+    col = get_collection("benchmark_indicators")
+
+    data = list(col.find({}, {"_id": 0}))
+
+    if not data:
+        raise RuntimeError(
+            "benchmark_indicators collection is empty."
+        )
+
+    df = pd.DataFrame(data)
+    df["date"] = pd.to_datetime(df["date"])
+
+    return df
+
+
+
+# SECTOR BREADTH
+
+
+def compute_sector_breadth(window_col="roc_63"):
+
+    df = load_stock_sector_fused()
 
     required = {"symbol", "sector_index", window_col}
     if not required.issubset(df.columns):
@@ -42,17 +67,12 @@ def compute_sector_breadth(window_col="roc_63"):
 
 
 
-# Capital Impact
+# CAPITAL IMPACT
 
 
 def compute_sector_capital_impact(window_col="roc_63"):
-    if not Path(INDICATORS_PATH).exists():
-        raise FileNotFoundError(
-            "stock_sector_fused.csv not found. "
-            "Run Phase 5.1 before sector rotation."
-        )
 
-    df = pd.read_csv(INDICATORS_PATH)
+    df = load_stock_sector_fused()
 
     required = {"symbol", "sector_index", "close", "volume", window_col}
     if not required.issubset(df.columns):
@@ -75,18 +95,13 @@ def compute_sector_capital_impact(window_col="roc_63"):
 
 
 
-# Relative Strength vs Market
+# RELATIVE STRENGTH VS MARKET
 
 
 def compute_sector_relative_strength(window_col="roc_63"):
-    if not Path(INDICATORS_PATH).exists():
-        raise FileNotFoundError("stock_sector_fused.csv not found")
 
-    if not Path(BENCHMARK_PATH).exists():
-        raise FileNotFoundError("benchmark_indicators.csv not found")
-
-    stock_df = pd.read_csv(INDICATORS_PATH)
-    bench_df = pd.read_csv(BENCHMARK_PATH)
+    stock_df = load_stock_sector_fused()
+    bench_df = load_benchmark_indicators()
 
     latest_stock = (
         stock_df.sort_values("date")
@@ -100,7 +115,12 @@ def compute_sector_relative_strength(window_col="roc_63"):
         .reset_index(name="sector_return")
     )
 
-    market_return = bench_df.sort_values("date").iloc[-1][window_col]
+    latest_benchmark = bench_df.sort_values("date").iloc[-1]
+
+    if window_col not in latest_benchmark:
+        raise ValueError(f"{window_col} not found in benchmark data")
+
+    market_return = latest_benchmark[window_col]
 
     sector_return["relative_strength"] = (
         sector_return["sector_return"] - market_return
@@ -110,7 +130,7 @@ def compute_sector_relative_strength(window_col="roc_63"):
 
 
 
-# Z-score helper
+# Z-SCORE HELPER
 
 
 def zscore(series: pd.Series):

@@ -2,29 +2,31 @@ import pandas as pd
 
 from scanners.vcp_scanner import scan_universe
 from utils.mongo import get_collection
-from utils.mongo_loader import csv_to_mongo
 
 
-OUTPUT_PATH = "data/processed/vcp_candidates.csv"
+def df_to_mongo(df, collection_name, clear_existing=True):
+    col = get_collection(collection_name)
+
+    if clear_existing:
+        col.delete_many({})
+
+    if not df.empty:
+        col.insert_many(df.to_dict(orient="records"))
 
 
 def run_phase3():
-    # READ FROM MONGODB
     col = get_collection("equity_indicators")
     df = pd.DataFrame(list(col.find({}, {"_id": 0})))
+
+    if df.empty:
+        raise RuntimeError("equity_indicators collection is empty")
+
     df["date"] = pd.to_datetime(df["date"])
 
-    # RUN VCP SCAN
     results = scan_universe(df)
 
-    # WRITE CSV (temporary)
-    results.to_csv(OUTPUT_PATH, index=False)
-
-    # WRITE MONGODB
-    csv_to_mongo(
-        OUTPUT_PATH,
-        "vcp_candidates"
-    )
+    print("Storing vcp_candidates in MongoDB...")
+    df_to_mongo(results, "vcp_candidates")
 
 
 if __name__ == "__main__":

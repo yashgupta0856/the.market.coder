@@ -7,6 +7,7 @@ from web.routes.dashboard import router as dashboard_router
 from web.routes.community import router as community_router
 from web.routes.api_monte_carlo import router as mc_router
 from web.routes.auth import router as auth_router
+from web.routes.news import router as news_router
 
 from web.routes import api_chart 
 
@@ -39,5 +40,5 @@ app.include_router(auth_router)
 app.include_router(dashboard_router)
 app.include_router(community_router)
 app.include_router(mc_router)
-
+app.include_router(news_router)
 app.include_router(api_chart.router)

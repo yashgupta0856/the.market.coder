@@ -6,10 +6,31 @@ from indicators.volatility import true_range, atr, rolling_std, range_compressio
 from indicators.trend import linear_regression_slope
 
 from utils.mongo import get_collection
-from utils.mongo_loader import csv_to_mongo
 
 
-OUTPUT_PATH = "data/processed/indicators/equity_indicators.csv"
+
+# Mongo Writer Helper
+
+
+def df_to_mongo(df, collection_name, clear_existing=True, batch_size=1000):
+    if df is None or df.empty:
+        return 0
+
+    col = get_collection(collection_name)
+
+    if clear_existing:
+        col.delete_many({})
+
+    records = df.to_dict(orient="records")
+
+    for i in range(0, len(records), batch_size):
+        col.insert_many(records[i:i + batch_size])
+
+    return len(records)
+
+
+
+# Indicator Computation
 
 
 def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
@@ -43,28 +64,29 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+
+# Phase 2 Runner
+
+
 def run_phase2():
-    # READ FROM MONGODB
     col = get_collection("ohlcv_equities")
     ohlcv = pd.DataFrame(list(col.find({}, {"_id": 0})))
+
+    if ohlcv.empty:
+        raise RuntimeError("ohlcv_equities collection is empty")
+
     ohlcv["date"] = pd.to_datetime(ohlcv["date"])
 
-    indicator_frames = []
+    frames = []
 
     for symbol, symbol_df in ohlcv.groupby("symbol"):
         enriched = compute_indicators(symbol_df)
-        indicator_frames.append(enriched)
+        frames.append(enriched)
 
-    final_df = pd.concat(indicator_frames, ignore_index=True)
+    final_df = pd.concat(frames, ignore_index=True)
 
-    # WRITE CSV (temporary)
-    final_df.to_csv(OUTPUT_PATH, index=False)
-
-    # WRITE MONGODB
-    csv_to_mongo(
-        OUTPUT_PATH,
-        "equity_indicators"
-    )
+    print("Storing equity_indicators in MongoDB...")
+    df_to_mongo(final_df, "equity_indicators")
 
 
 if __name__ == "__main__":

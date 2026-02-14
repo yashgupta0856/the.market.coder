@@ -44,6 +44,7 @@ async def signup_user(
         "name": name,
         "email": email,
         "password": hash_password(password),
+        "role":"user",
         "tradingview_id": tradingview_id,
         "access_expires_at": expires_at,
         "created_at": datetime.now(timezone.utc),

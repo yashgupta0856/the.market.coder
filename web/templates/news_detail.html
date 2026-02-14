@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<article class="news-article">
+
+  <header class="news-header">
+    <h1>{{ article.title }}</h1>
+
+    <!-- {% if article.category %}
+    <div class="news-category">
+      {{ article.category }}
+    </div>
+    {% endif %} -->
+  </header>
+
+  {% if article.image_url %}
+  <div class="news-hero-image">
+    <img src="{{ article.image_url }}" alt="{{ article.title }}">
+  </div>
+  {% endif %}
+
+  <div class="news-body">
+    {{ article.content }}
+  </div>
+
+</article>
+
+{% endblock %}

@@ -183,6 +183,7 @@ def nse_sector_enrichment_to_csv(output_csv: str):
     # STEP 4: WRITE CSV
     
     output_df = pd.DataFrame(results)
-    output_df.to_csv(output_csv, index=False)
+    if output_csv:
+        output_df.to_csv(output_csv, index=False)
 
     return output_df
