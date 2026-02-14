@@ -52,7 +52,6 @@ async def create_community_post(
     commentary: str = Form(None),
     image: UploadFile = File(None),
 ):
-    raise Exception("THIS FILE IS LOADED")
 
     """
     IMPORTANT:
