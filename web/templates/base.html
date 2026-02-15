@@ -24,10 +24,10 @@
   <div class="nav-toggle" onclick="toggleNav()">☰</div>
   <nav class="nav-right" id="navMenu">
     <a href="/">Home</a>
+    <a href="/news">News</a>
     {% if request.session.get("user_email") %}
     <a href="/dashboard">Dashboard</a>
     <a href="/community">Community</a>
-    <a href="/news">News</a>
     <a href="/logout">Logout</a>
     {% else %}
     <a href="/login">Login</a>
@@ -71,6 +71,34 @@
 function toggleNav() {
   document.getElementById("navMenu").classList.toggle("active");
 }
+</script>
+
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    ClassicEditor
+        .create(document.querySelector('#editor'))
+        .then(editor => {
+
+            const form = document.querySelector('.news-form');
+
+            form.addEventListener('submit', function (e) {
+                const content = editor.getData().trim();
+
+                if (!content) {
+                    e.preventDefault();
+                    alert("Article content cannot be empty.");
+                    return;
+                }
+
+                document.querySelector('#editor').value = content;
+            });
+
+        })
+        .catch(error => {
+            console.error(error);
+        });
+});
 </script>
 
 
