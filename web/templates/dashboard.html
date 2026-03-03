@@ -47,25 +47,42 @@
 <section class="panel rotation-panel">
   <div class="rotation-header">
     Sector Rotation — Capital Weighted
-    <span class="rotation-sub">(Rank #1 = strongest leadership)</span>
   </div>
 
-  <div class="rotation-grid">
-    {% for row in rotating_sectors %}
-    <div class="rotation-item
-      {% if row.rotation_rank <= 3 %}
-        rotation-strong
-      {% elif row.rotation_rank >= 8 %}
-        rotation-weak
-      {% else %}
-        rotation-neutral
-      {% endif %}
-    ">
-      <span>{{ row.sector_index }}</span>
-      <span class="rotation-rank">#{{ row.rotation_rank }}</span>
+  <div class="rotation-heatmap">
+
+  {% for row in rotating_sectors or [] %}
+
+   {% set ret = row.capital_weighted_return|float %}
+
+<div 
+  class="heatmap-tile
+    {% if ret > 0 %}
+      heat-positive
+    {% elif ret < 0 %}
+      heat-negative
+    {% else %}
+      heat-neutral
+    {% endif %}
+  "
+>
+      <div class="heatmap-sector">
+        {{ row.sector_index }}
+      </div>
+
+      <div class="heatmap-rank">
+        #{{ row.rotation_rank }}
+      </div>
+
+      <div class="heatmap-return">
+        {{ "%.2f"|format(ret) }}%
+      </div>
+
     </div>
-    {% endfor %}
-  </div>
+
+  {% endfor %}
+
+</div>
 </section>
 
 <!-- ================= TOGGLE ================= -->

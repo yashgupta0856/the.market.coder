@@ -16,7 +16,8 @@ def get_top_rotating_sectors(limit=10):
             {
                 "_id": 0,
                 "sector_index": 1,
-                "rotation_rank": 1
+                "rotation_rank": 1,
+                "capital_weighted_return": 1
             }
         )
         .sort("rotation_rank", 1)

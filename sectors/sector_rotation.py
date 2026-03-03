@@ -2,9 +2,9 @@ import pandas as pd
 from utils.mongo import get_collection
 
 
-
-# HELPERS — LOAD FROM MONGODB
-
+# =====================================================
+# LOADERS
+# =====================================================
 
 def load_stock_sector_fused():
     col = get_collection("stock_sector_fused")
@@ -39,9 +39,9 @@ def load_benchmark_indicators():
     return df
 
 
-
+# =====================================================
 # SECTOR BREADTH
-
+# =====================================================
 
 def compute_sector_breadth(window_col="roc_63"):
 
@@ -66,17 +66,17 @@ def compute_sector_breadth(window_col="roc_63"):
     )
 
 
+# =====================================================
+# CAPITAL WEIGHTED RETURN (FIXED)
+# =====================================================
 
-# CAPITAL IMPACT
-
-
-def compute_sector_capital_impact(window_col="roc_63"):
+def compute_sector_capital_weighted_return(window_col="roc_63"):
 
     df = load_stock_sector_fused()
 
     required = {"symbol", "sector_index", "close", "volume", window_col}
     if not required.issubset(df.columns):
-        raise ValueError("Missing required columns for capital impact")
+        raise ValueError("Missing required columns for capital weighted return")
 
     latest = (
         df.sort_values("date")
@@ -84,19 +84,28 @@ def compute_sector_capital_impact(window_col="roc_63"):
           .tail(1)
     )
 
+    # Proxy capital weight (price * volume)
     latest["capital_weight"] = latest["close"] * latest["volume"]
-    latest["impact"] = latest[window_col] * latest["capital_weight"]
 
-    return (
-        latest.groupby("sector_index")["impact"]
-        .sum()
-        .reset_index(name="capital_impact")
+    grouped = latest.groupby("sector_index")
+
+    weighted_return = (
+        grouped.apply(
+            lambda x: (
+                (x[window_col] * x["capital_weight"]).sum()
+                / x["capital_weight"].sum()
+                if x["capital_weight"].sum() != 0 else 0
+            )
+        )
+        .reset_index(name="capital_weighted_return")
     )
 
+    return weighted_return
 
 
+# =====================================================
 # RELATIVE STRENGTH VS MARKET
-
+# =====================================================
 
 def compute_sector_relative_strength(window_col="roc_63"):
 
@@ -129,40 +138,42 @@ def compute_sector_relative_strength(window_col="roc_63"):
     return sector_return[["sector_index", "relative_strength"]]
 
 
-
+# =====================================================
 # Z-SCORE HELPER
-
+# =====================================================
 
 def zscore(series: pd.Series):
     return (series - series.mean()) / series.std(ddof=0)
 
 
-
+# =====================================================
 # MASTER ROTATION ENGINE
-
+# =====================================================
 
 def build_sector_rotation(window_col="roc_63"):
     """
     Builds sector rotation ranking using:
     - breadth
-    - capital impact
+    - capital weighted return
     - relative strength
     """
 
     breadth = compute_sector_breadth(window_col)
-    impact  = compute_sector_capital_impact(window_col)
+    cap_ret = compute_sector_capital_weighted_return(window_col)
     rel     = compute_sector_relative_strength(window_col)
 
     df = (
         breadth
-        .merge(impact, on="sector_index")
+        .merge(cap_ret, on="sector_index")
         .merge(rel, on="sector_index")
     )
 
+    # Z-scores
     df["z_breadth"]  = zscore(df["breadth"])
-    df["z_capital"]  = zscore(df["capital_impact"])
+    df["z_capital"]  = zscore(df["capital_weighted_return"])
     df["z_relative"] = zscore(df["relative_strength"])
 
+    # Composite rotation score
     df["rotation_score"] = (
         0.4 * df["z_breadth"] +
         0.4 * df["z_capital"] +
@@ -176,7 +187,7 @@ def build_sector_rotation(window_col="roc_63"):
         [
             "sector_index",
             "breadth",
-            "capital_impact",
+            "capital_weighted_return",
             "relative_strength",
             "rotation_score",
             "rotation_rank",
