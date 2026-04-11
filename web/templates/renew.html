@@ -1,36 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section class="panel" style="max-width:420px;margin:80px auto;">
-  <div style="text-align:center;margin-bottom:22px;">
-    <div class="hero-title">ACCESS EXPIRED</div>
-    <div class="hero-symbol" style="font-size:22px;">RENEW ACCESS</div>
-  </div>
+<section class="panel auth-panel fade-in">
+    <div class="hero-title">SUBSCRIPTION SYSTEM</div>
+    <div class="hero-symbol" style="font-size:26px;">RENEW ACCESS</div>
 
-  <p style="text-align:center;color:var(--muted);margin-bottom:18px;">
-    Your 2-month community & dashboard access has expired.
-    <br>
-    Renew to continue using the.market.coder.
-  </p>
+    {% if error %}
+    <div style="margin-top:16px; padding:12px; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; border-radius:10px; font-size:14px; font-weight:500;">
+        {{ error }}
+    </div>
+    {% endif %}
 
-  <p style="text-align:center;margin-bottom:14px;">
-    <strong>₹99</strong> · Unlock another <strong>2 months</strong>
-  </p>
+    <div style="margin-top:20px; font-size:14px; color:var(--muted); text-align:left; line-height:1.6;">
+        Your access relies on 1-month manual renewals. Scan the QR code, complete the transaction, and upload the proof below to extend your dashboard access.
+    </div>
 
-  <form method="post" action="/renew" enctype="multipart/form-data"
-        style="display:flex;flex-direction:column;gap:14px;">
+    <form method="post" action="/renew" enctype="multipart/form-data" class="auth-form" style="margin-top: 20px;">
+        
+        <div class="form-group" style="margin-bottom: 8px;">
+            <label>Payment Code (QR)</label>
+            <img src="/static/payment.jpeg" style="width:100%; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px;">
+        </div>
 
-    <label style="font-family:var(--mono);font-size:11px;color:var(--muted);">
-      PAYMENT PROOF
-    </label>
-     <img src="/static/payment.jpeg" width="200" >
-    <input type="file" name="payment_proof" required>
+        <div class="form-group">
+            <label>Upload Payment Proof</label>
+            <input type="file" name="payment_proof" required style="padding: 10px; background: rgba(0,0,0,0.2);">
+        </div>
 
-    <button type="submit" class="risk-btn">
-      RENEW ACCESS
-    </button>
-  </form>
-
+        <button type="submit" class="btn-primary" style="margin-top:18px; width:100%;">
+            SUBMIT FOR RENEWAL
+        </button>
+    </form>
 </section>
 
 {% endblock %}

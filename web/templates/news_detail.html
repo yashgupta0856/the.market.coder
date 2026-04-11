@@ -1,28 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
 
-<article class="news-article">
-
-  <header class="news-header">
-    <h1>{{ article.title }}</h1>
-
-    <!-- {% if article.category %}
-    <div class="news-category">
-      {{ article.category }}
+<article class="news-article fade-in" style="padding: 40px 0 80px 0;">
+    <div style="margin-bottom: 24px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; font-size: 13px;">
+        {{ article.category }}
     </div>
-    {% endif %} -->
-  </header>
 
-  {% if article.image_url %}
-  <div class="news-hero-image">
-    <img src="{{ article.image_url }}" alt="{{ article.title }}">
-  </div>
-  {% endif %}
+    <h1>{{ article.title }}</h1>
+    
+    <div style="display:flex; align-items:center; gap:12px; margin-top:20px; color:var(--muted); font-size:14px; font-weight:500;">
+        <span>By <strong>{{ article.author }}</strong></span>
+        <span>•</span>
+        <span>{{ article.created_at.strftime("%B %d, %Y") }}</span>
+    </div>
 
-  <div class="news-body">
-    {{ article.content | safe}}
-  </div>
+    {% if article.image_url %}
+    <div class="news-hero-image">
+        <img src="{{ article.image_url }}" alt="{{ article.title }}">
+    </div>
+    {% endif %}
 
+    <div class="news-body" style="margin-top: 40px;">
+        {{ article.content | safe }}
+    </div>
+
+    <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border);">
+        <a href="/news" class="btn-secondary">← Back to Intelligence</a>
+    </div>
 </article>
 
 {% endblock %}

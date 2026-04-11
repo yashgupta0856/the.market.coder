@@ -1,43 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section style="margin-bottom:40px;">
-  <h1 style="font-size:28px;margin-bottom:6px;">Market Intelligence Feed</h1>
-  <p class="subtitle">Latest insights, announcements & research notes</p>
+<section class="fade-in" style="margin-bottom:40px;">
+  <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px;">Market Intelligence</h1>
+  <p class="subtitle" style="font-size: 15px;">
+    In-depth structural analysis and weekly performance reviews by the.market.coder team
+  </p>
 </section>
 
-<div class="news-grid">
-
-  {% for article in news %}
-  <div class="news-card">
-
-    {% if article.image_url %}
+<div class="news-grid fade-in" style="animation-delay: 0.15s;">
+  {% for doc in news %}
+  <article class="panel news-card" style="padding: 20px;">
+    {% if doc.image_url %}
     <div class="news-image">
-      <img src="{{ article.image_url }}" alt="{{ article.title }}">
-      <div class="news-overlay"></div>
-      {% if article.category %}
-        <span class="news-category">{{ article.category }}</span>
-      {% endif %}
+      <a href="/news/{{ doc.slug }}">
+        <img src="{{ doc.image_url }}" alt="News Header">
+      </a>
     </div>
     {% endif %}
 
-    <div class="news-content">
-      <h3>
-        <a href="/news/{{ article.slug }}">
-          {{ article.title }}
-        </a>
-      </h3>
-
-      <p>{{ article.summary }}</p>
-
-      <a href="/news/{{ article.slug }}" class="news-read-btn">
-        Read Full Article →
-      </a>
+    <div style="display:flex; flex-direction:column; flex:1;">
+        <div class="news-category">{{ doc.category }}</div>
+        
+        <h2 class="news-title">
+          <a href="/news/{{ doc.slug }}">{{ doc.title }}</a>
+        </h2>
+        
+        <p class="news-summary">{{ doc.summary }}</p>
+        
+        <div style="margin-top:auto; padding-top:20px; font-size:12px; font-weight:600; color:var(--muted); display:flex; justify-content:space-between;">
+          <span>{{ doc.created_at.strftime("%b %d, %Y") }}</span>
+          <span>By {{ doc.author }}</span>
+        </div>
     </div>
-
-  </div>
+  </article>
   {% endfor %}
-
 </div>
 
 {% endblock %}

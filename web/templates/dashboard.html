@@ -2,20 +2,22 @@
 {% block content %}
 
 <!-- ================= PAGE HEADER ================= -->
-<section style="margin-bottom:32px;">
-  <h1>Market Dashboard</h1>
-  <p class="subtitle">
+<section class="fade-in" style="margin-bottom:40px;">
+  <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px;">Market Dashboard</h1>
+  <p class="subtitle" style="font-size: 15px;">
     Institutional-style volatility contraction intelligence for Indian equities
   </p>
 </section>
 
+
+
 <!-- ================= SECTOR INTELLIGENCE ================= -->
-<section class="sector-row">
+<section class="sector-row fade-in" style="animation-delay: 0.15s;">
   {% for title, key in [
-    ("Leading Sectors","leading"),
-    ("Improving Sectors","improving"),
-    ("Weakening Sectors","weakening"),
-    ("Lagging Sectors","lagging")
+  ("Leading Sectors","leading"),
+  ("Improving Sectors","improving"),
+  ("Weakening Sectors","weakening"),
+  ("Lagging Sectors","lagging")
   ] %}
   <div class="panel sector-card">
     <h4>{{ title }}</h4>
@@ -44,70 +46,39 @@
 </section>
 
 <!-- ================= SECTOR ROTATION ================= -->
-<section class="panel rotation-panel">
+<section class="panel rotation-panel fade-in" style="animation-delay: 0.2s; margin-bottom: 40px;">
   <div class="rotation-header">
     Sector Rotation — Capital Weighted
   </div>
 
   <div class="rotation-heatmap">
-
-  {% for row in rotating_sectors or [] %}
-
-   {% set ret = row.capital_weighted_return|float %}
-
-<div 
-  class="heatmap-tile
-    {% if ret > 0 %}
-      heat-positive
-    {% elif ret < 0 %}
-      heat-negative
-    {% else %}
-      heat-neutral
-    {% endif %}
-  "
->
-      <div class="heatmap-sector">
-        {{ row.sector_index }}
-      </div>
-
-      <div class="heatmap-rank">
-        #{{ row.rotation_rank }}
-      </div>
-
-      <div class="heatmap-return">
-        {{ "%.2f"|format(ret) }}%
-      </div>
-
+    {% for row in rotating_sectors or [] %}
+    {% set ret = row.capital_weighted_return|float %}
+    <div
+      class="heatmap-tile {% if ret > 0 %} heat-positive {% elif ret < 0 %} heat-negative {% else %} heat-neutral {% endif %}">
+      <div class="heatmap-sector">{{ row.sector_index }}</div>
+      <div class="heatmap-rank">#{{ row.rotation_rank }}</div>
+      <div class="heatmap-return">{{ "%.2f"|format(ret) }}%</div>
     </div>
-
-  {% endfor %}
-
-</div>
+    {% endfor %}
+  </div>
 </section>
 
 <!-- ================= TOGGLE ================= -->
-<div class="scanner-toggle">
-  <button
-    id="btn-vcp"
-    class="scanner-btn active"
-    onclick="showVCP()">
+<div class="scanner-toggle fade-in" style="animation-delay: 0.1s; margin-bottom: 40px;">
+  <button id="btn-vcp" class="scanner-btn active" onclick="showVCP()">
     VCP Scanner
   </button>
-
-  <button
-    id="btn-sniper"
-    class="scanner-btn"
-    onclick="showSniper()">
+  <button id="btn-sniper" class="scanner-btn" onclick="showSniper()">
     Sniper Scanner
   </button>
 </div>
-
 
 <!-- ================= VCP MODE ================= -->
 <div id="mode-vcp" class="mode-section active">
 
   <!-- ===== RANK #1 EXPLAINABILITY ===== -->
-  <section class="market-hero">
+  <section class="market-hero" style="margin-bottom: 40px;">
     <div class="market-hero-header">
       <div class="hero-title">Primary Market Context</div>
       <div class="hero-symbol">
@@ -120,9 +91,9 @@
       <div class="hero-panel">
         <h4>Model Conviction</h4>
         {% for label, value in [
-          ("Trend Strength", rank1_left.trend_strength),
-          ("Momentum", rank1_left.momentum),
-          ("Volatility Tightness", rank1_left.volatility_tightness)
+        ("Trend Strength", rank1_left.trend_strength),
+        ("Momentum", rank1_left.momentum),
+        ("Volatility Tightness", rank1_left.volatility_tightness)
         ] %}
         <div class="hero-metric">
           <span>{{ label }}</span>
@@ -134,10 +105,10 @@
       <div class="hero-panel">
         <h4>Structural Validation</h4>
         {% for gate in [
-          ("Trend Gate", rank1_right.trend_gate),
-          ("Volatility Gate", rank1_right.volatility_gate),
-          ("Price Tightness", rank1_right.price_tightness_gate),
-          ("Volume Dry-Up", rank1_right.volume_dryup_gate)
+        ("Trend Gate", rank1_right.trend_gate),
+        ("Volatility Gate", rank1_right.volatility_gate),
+        ("Price Tightness", rank1_right.price_tightness_gate),
+        ("Volume Dry-Up", rank1_right.volume_dryup_gate)
         ] %}
         <div class="hero-gate">
           <span>{{ gate[0] }}</span>
@@ -149,7 +120,7 @@
   </section>
 
   <!-- ===== RANKED VCP TABLE ===== -->
-  <div class="panel rank-panel">
+  <div class="panel rank-panel" style="margin-bottom: 40px;">
     <h2>Ranked VCP Stocks</h2>
 
     <div class="rank-table-scroll">
@@ -183,12 +154,10 @@
             </td>
             <td>{{ s.contraction_count if s.contraction_count else 0 }}</td>
             <td>
-              <button class="risk-btn btn-primary"
-                onclick="openMonteCarlo('{{ s.symbol }}')">Risk</button>
+              <button class="risk-btn btn-primary" onclick="openMonteCarlo('{{ s.symbol }}')">Risk</button>
             </td>
             <td>
-              <button class="risk-btn btn-secondary"
-                onclick="openChart('{{ s.symbol }}')">Chart</button>
+              <button class="risk-btn btn-secondary" onclick="openChart('{{ s.symbol }}')">Chart</button>
             </td>
           </tr>
           {% endfor %}
@@ -199,13 +168,31 @@
 
   <!-- ===== OTHER VCP ===== -->
   <section class="panel residual-panel section-gap">
-    <h3>Other VCP-Qualified Stocks</h3>
-    <div class="residual-scroll">
-      <div class="residual-grid">
-        {% for sym in remaining_vcp_stocks %}
-        <div class="residual-item">{{ sym }}</div>
-        {% endfor %}
-      </div>
+    <h3 style="margin-top:0; font-size:18px;">Other VCP-Qualified Stocks</h3>
+
+    <div class="rank-table-scroll" style="max-height: 250px;">
+      <table class="rank-table" style="font-size: 13px;">
+        <tbody>
+          {% set cols = 6 %}
+          {% for i in range(0, remaining_vcp_stocks|length, cols) %}
+          <tr>
+            {% for sym in remaining_vcp_stocks[i:i+cols] %}
+            <td
+              style="border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); width: 16.66%; text-align: center; font-weight: 600; color: #cbd5e1;">
+              {{ sym }}
+            </td>
+            {% endfor %}
+            <!-- Pad empty cells if row not full -->
+            {% set rem = cols - (remaining_vcp_stocks[i:i+cols]|length) %}
+            {% if rem > 0 %}
+            {% for _ in range(rem) %}
+            <td style="border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);"></td>
+            {% endfor %}
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </section>
 
@@ -239,9 +226,7 @@
             <td>{{ s.sniper_score }}</td>
 
             <td>
-              <button
-                class="risk-btn btn-secondary"
-                onclick="openChart('{{ s.symbol }}')">
+              <button class="risk-btn btn-secondary" onclick="openChart('{{ s.symbol }}')">
                 Chart
               </button>
             </td>
@@ -261,13 +246,25 @@
       <span onclick="closeMonteCarlo()">×</span>
     </div>
 
-    <div id="mc-symbol" class="mc-symbol"></div>
+    <div id="mc-symbol" class="mc-symbol" style="font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 20px;"></div>
 
-    <div class="mc-metrics">
-      <div class="mc-row"><span>Expected Return</span><span id="mc-exp" class="mc-value"></span></div>
-      <div class="mc-row"><span>Probability of Loss</span><span id="mc-loss" class="mc-value"></span></div>
-      <div class="mc-row"><span>Probability of +5%</span><span id="mc-gain" class="mc-value"></span></div>
-      <div class="mc-row"><span>Worst 5%</span><span id="mc-worst" class="mc-value"></span></div>
+    <div class="mc-metrics" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+      <div class="mc-row" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:12px; color:var(--muted); font-weight:600; margin-bottom:4px;">Expected Return</div>
+        <div id="mc-exp" class="mc-value" style="font-size:18px; font-weight:800;"></div>
+      </div>
+      <div class="mc-row" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.1);">
+        <div style="font-size:12px; color:#fca5a5; font-weight:600; margin-bottom:4px;">Probability of Loss</div>
+        <div id="mc-loss" class="mc-value" style="font-size:18px; font-weight:800; color:#ef4444;"></div>
+      </div>
+      <div class="mc-row" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.1);">
+        <div style="font-size:12px; color:#6ee7b7; font-weight:600; margin-bottom:4px;">Probability of +5%</div>
+        <div id="mc-gain" class="mc-value" style="font-size:18px; font-weight:800; color:#10b981;"></div>
+      </div>
+      <div class="mc-row" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:12px; color:var(--muted); font-weight:600; margin-bottom:4px;">Worst 5% Outcome</div>
+        <div id="mc-worst" class="mc-value" style="font-size:18px; font-weight:800;"></div>
+      </div>
     </div>
 
     <canvas id="mcChart" height="160"></canvas>
@@ -287,85 +284,132 @@
 
 <!-- ================= FULL JS ================= -->
 <script>
-/* ---------- MODE TOGGLE ---------- */
-function showVCP() {
-  document.getElementById("mode-vcp").classList.add("active");
-  document.getElementById("mode-sniper").classList.remove("active");
+  /* ---------- MODE TOGGLE ---------- */
+  function showVCP() {
+    document.getElementById("mode-vcp").classList.add("active");
+    document.getElementById("mode-sniper").classList.remove("active");
 
-  document.getElementById("btn-vcp").classList.add("active");
-  document.getElementById("btn-sniper").classList.remove("active");
-}
+    document.getElementById("btn-vcp").classList.add("active");
+    document.getElementById("btn-sniper").classList.remove("active");
+  }
 
-function showSniper() {
-  document.getElementById("mode-vcp").classList.remove("active");
-  document.getElementById("mode-sniper").classList.add("active");
+  function showSniper() {
+    document.getElementById("mode-vcp").classList.remove("active");
+    document.getElementById("mode-sniper").classList.add("active");
 
-  document.getElementById("btn-sniper").classList.add("active");
-  document.getElementById("btn-vcp").classList.remove("active");
-}
+    document.getElementById("btn-sniper").classList.add("active");
+    document.getElementById("btn-vcp").classList.remove("active");
+  }
 
-document.addEventListener("DOMContentLoaded", showVCP);
+  document.addEventListener("DOMContentLoaded", showVCP);
 
 
-/* ---------- MONTE CARLO ---------- */
-let mcChart = null;
+  /* ---------- MONTE CARLO ---------- */
+  let mcChart = null;
 
-async function openMonteCarlo(symbol) {
-  document.getElementById("mc-modal").classList.remove("hidden");
-  document.getElementById("mc-symbol").innerText = "Symbol: " + symbol;
+  async function openMonteCarlo(symbol) {
+    document.getElementById("mc-modal").classList.remove("hidden");
+    document.getElementById("mc-symbol").innerText = "Symbol: " + symbol;
 
-  const res = await fetch(`/api/monte-carlo/${symbol}`);
-  const data = await res.json();
-  if (!data || data.status !== "success") return;
+    const res = await fetch(`/api/monte-carlo/${symbol}`);
+    const data = await res.json();
+    if (!data || data.status !== "success") return;
 
-  document.getElementById("mc-exp").innerText = data.metrics.expected_return_pct + "%";
-  document.getElementById("mc-loss").innerText = data.metrics.probability_of_loss_pct + "%";
-  document.getElementById("mc-gain").innerText = data.metrics.probability_of_5pct_gain_pct + "%";
-  document.getElementById("mc-worst").innerText = data.metrics.worst_5pct_outcome_pct + "%";
+    document.getElementById("mc-exp").innerText = data.metrics.expected_return_pct + "%";
+    document.getElementById("mc-loss").innerText = data.metrics.probability_of_loss_pct + "%";
+    document.getElementById("mc-gain").innerText = data.metrics.probability_of_5pct_gain_pct + "%";
+    document.getElementById("mc-worst").innerText = data.metrics.worst_5pct_outcome_pct + "%";
 
-  const ctx = document.getElementById("mcChart").getContext("2d");
-  if (mcChart) mcChart.destroy();
+    const ctx = document.getElementById("mcChart").getContext("2d");
+    if (mcChart) mcChart.destroy();
 
-  mcChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: data.paths[0].map((_, i) => i),
-      datasets: data.paths.slice(0, 25).map(p => ({
-        data: p, borderWidth: 1, pointRadius: 0
-      }))
-    },
-    options: { plugins: { legend: { display: false } }, scales: { x: { display: false } } }
-  });
-}
-function closeMonteCarlo() {
-  document.getElementById("mc-modal").classList.add("hidden");
-}
+    // Calculate mean path
+    const meanPath = data.paths[0].map((_, i) => {
+      let sum = 0;
+      for (let p of data.paths) sum += p[i];
+      return sum / data.paths.length;
+    });
 
-/* ---------- PRICE CHART ---------- */
-async function openChart(symbol) {
-  document.getElementById("chart-modal").classList.remove("hidden");
-  document.getElementById("chart-title").innerText = "Chart: " + symbol;
+    mcChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: data.paths[0].map((_, i) => i),
+        datasets: [
+          ...data.paths.slice(0, 50).map(p => {
+            const isPositive = p[p.length - 1] >= p[0];
+            return {
+              data: p,
+              borderWidth: 1.5,
+              borderColor: isPositive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              pointRadius: 0,
+              tension: 0.4
+            };
+          }),
+          {
+            label: 'Mean Expected Trajectory',
+            data: meanPath,
+            borderWidth: 3,
+            borderColor: 'rgba(255, 255, 255, 1)',
+            pointRadius: 0,
+            tension: 0.4
+          }
+        ]
+      },
+      options: {
+        plugins: { 
+          legend: { display: false },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+            titleColor: '#fff',
+            bodyColor: '#cbd5e1',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1
+          }
+        },
+        scales: { 
+          x: { display: false },
+          y: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            border: { display: false },
+            ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
+          }
+        },
+        interaction: { mode: 'index', intersect: false },
+        animation: { duration: 1200, easing: 'easeOutQuart' }
+      }
+    });
+  }
+  function closeMonteCarlo() {
+    document.getElementById("mc-modal").classList.add("hidden");
+  }
 
-  const res = await fetch(`/api/chart/${symbol}`);
-  const data = await res.json();
-  if (!data || data.status !== "success") return;
+  /* ---------- PRICE CHART ---------- */
+  async function openChart(symbol) {
+    document.getElementById("chart-modal").classList.remove("hidden");
+    document.getElementById("chart-title").innerText = "Chart: " + symbol;
 
-  const container = document.getElementById("chart-container");
-  container.innerHTML = "";
+    const res = await fetch(`/api/chart/${symbol}`);
+    const data = await res.json();
+    if (!data || data.status !== "success") return;
 
-  const chart = LightweightCharts.createChart(container, {
-    height: 520,
-    layout: { background: { color: "#0b0f14" }, textColor: "#e5e7eb" }
-  });
+    const container = document.getElementById("chart-container");
+    container.innerHTML = "";
 
-  chart.addSeries(LightweightCharts.CandlestickSeries).setData(data.candles);
-  chart.addSeries(LightweightCharts.HistogramSeries,
-    { priceFormat: { type: "volume" }, priceScaleId: "" }
-  ).setData(data.volume);
-}
-function closeChart() {
-  document.getElementById("chart-modal").classList.add("hidden");
-}
+    const chart = LightweightCharts.createChart(container, {
+      height: 520,
+      layout: { background: { color: "#0b0f14" }, textColor: "#e5e7eb" }
+    });
+
+    chart.addSeries(LightweightCharts.CandlestickSeries).setData(data.candles);
+    chart.addSeries(LightweightCharts.HistogramSeries,
+      { priceFormat: { type: "volume" }, priceScaleId: "" }
+    ).setData(data.volume);
+  }
+  function closeChart() {
+    document.getElementById("chart-modal").classList.add("hidden");
+  }
 </script>
 
 {% endblock %}

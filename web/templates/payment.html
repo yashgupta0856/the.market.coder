@@ -1,28 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section class="card center">
-    <h1>Community Access</h1>
-
+<section class="panel auth-panel fade-in" style="margin-top: 120px; padding: 40px; border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 10px 40px rgba(16, 185, 129, 0.1);">
+    <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
     
-    {% if pending %}
-    <div class="info-box">
-        Payment submitted. Verification in progress (within 1 hour).
-    </div>
-    {% else %}
-    <p>
-        One-time ₹99 verification fee unlocks
-        <strong>1 months</strong> of premium community access.
-    </p>
-        <img src="/static/payment.jpeg" width="200">
+    <div class="hero-title" style="color: var(--secondary);">REQUEST SUBMITTED</div>
+    <div class="hero-symbol" style="font-size:24px; margin-bottom: 20px;">Transmission Complete</div>
 
-        <form method="post" action="/payment/upload" enctype="multipart/form-data">
-            <input type="file" name="image" required>
-            <button class="btn-primary" type="submit">
-                Upload Payment Proof
-            </button>
-        </form>
-    {% endif %}
+    <p style="font-size: 15px; color: var(--muted); line-height: 1.6; margin-bottom: 30px;">
+        Your payment proof has been uploaded securely to the administrative queue. 
+        Access to the dashboard and community engines will be granted or renewed upon verification.
+    </p>
+
+    <a href="/" class="btn-primary" style="width: 100%;">Return to Base</a>
 </section>
 
 {% endblock %}

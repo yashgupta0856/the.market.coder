@@ -1,37 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section style="margin-bottom:32px;">
-  <h1>Community Research</h1>
-  <p class="subtitle">
+<section class="fade-in" style="margin-bottom:40px;">
+  <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px;">Community Charts</h1>
+  <p class="subtitle" style="font-size: 15px;">
     Educational VCP observations shared by the the.market.coder team
   </p>
 </section>
 
-{% if posts %}
-<div class="community-grid">
-    {% for post in posts %}
-   <div class="community-card">
-   <p>{{ post.created_at.strftime('%Y-%m-%d') }}</p>
-  <div class="status-tag">ADMIN</div>
+<div class="community-grid fade-in" style="animation-delay: 0.1s;">
+  {% for doc in posts %}
+  <div class="panel community-card" style="padding: 16px;">
+    
+    {% if doc.post_type == "vcp_setup" %}
+      <div class="status-tag" style="background:var(--primary); color:#fff;">VCP SETUP</div>
+    {% elif doc.post_type == "breakout" %}
+      <div class="status-tag" style="background:var(--secondary); color:#064e3b;">BREAKOUT</div>
+    {% else %}
+      <div class="status-tag" style="background:var(--warning); color:#78350f;">ANALYSIS</div>
+    {% endif %}
 
-  <h3>{{ post.symbol }}</h3>
+    <img src="{{ doc.image_url }}" alt="Stock Chart">
 
-  <p style="color:var(--muted);">
-    Entry: {{ post.entry }} · Risk: {{ post.stop_loss }} · Target: {{ post.target }}
-  </p>
-
-  <p>{{ post.commentary }}</p>
-
-  {% if post.image_path %}
-    <img src="{{ post.image_path }}" alt="{{ post.symbol }}">
-  {% endif %}
-</div>
-
+    <div style="padding: 10px 4px 0 4px;">
+      <h3 style="margin:0 0 10px 0; font-size:20px; font-weight:800;">{{ doc.symbol }}</h3>
+      <p style="margin:0 0 16px 0; font-size:15px; color:#cbd5e1; line-height:1.6;">{{ doc.notes }}</p>
+      <div style="font-size:12px; font-weight:600; color:var(--muted);">
+        Posted {{ doc.created_at.strftime("%b %d, %Y") }}
+      </div>
+    </div>
+  </div>
   {% endfor %}
 </div>
-{% else %}
-<p>No research posts available yet.</p>
-{% endif %}
 
 {% endblock %}

@@ -1,50 +1,65 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section class="panel news-create-panel">
+<section class="panel auth-panel fade-in" style="max-width: 800px;">
+    <div class="hero-title" style="color: var(--warning);">ADMIN COMMAND</div>
+    <div class="hero-symbol" style="font-size:26px;">PUBLISH INTELLIGENCE</div>
 
-  <div style="margin-bottom:24px;">
-    <h1>Create News Article</h1>
-    <p class="subtitle">
-      Publish market updates and institutional insights
-    </p>
-  </div>
-
-  <form method="post" enctype="multipart/form-data" class="news-form">
-
-    <div class="form-group">
-      <label>Title</label>
-      <input type="text" name="title" required>
+    {% if message %}
+    <div style="margin-top:16px; padding:12px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7; border-radius:10px; font-size:14px; font-weight:500;">
+        {{ message }}
     </div>
+    {% endif %}
 
-    <div class="form-group">
-      <label>Short Summary</label>
-      <textarea name="summary" rows="3" required></textarea>
-    </div>
+    <form method="post" action="/admin/news" enctype="multipart/form-data" class="auth-form news-form" style="margin-top: 24px;">
+        
+        <div class="form-group">
+            <label>Headline Title</label>
+            <input type="text" name="title" required placeholder="NIFTY 50 Sector Rotation Analysis...">
+        </div>
 
-    <div class="form-group">
-      <label>Full Article Content</label>
-      <textarea name="content" id="editor"></textarea>
-    </div>
+        <div class="form-group">
+            <label>Category</label>
+            <input type="text" name="category" required placeholder="e.g. SECTOR ANALYSIS">
+        </div>
 
-    <div class="form-group">
-      <label>Category</label>
-      <input type="text" name="category">
-    </div>
+        <div class="form-group">
+            <label>Summary / Subtitle</label>
+            <textarea name="summary" rows="2" placeholder="Brief 1-sentence summary of the report..."></textarea>
+        </div>
 
-    <div class="form-group">
-      <label>Image</label>
-      <input type="file" name="image">
-    </div>
+        <div class="form-group">
+            <label>Hero Image</label>
+            <input type="file" name="image" style="padding: 10px; background: rgba(0,0,0,0.2);">
+        </div>
 
-    <div style="margin-top:20px;">
-      <button type="submit" class="btn-primary">
-        Publish Article
-      </button>
-    </div>
+        <div class="form-group">
+            <label>Full Content (Rich Text)</label>
+            <!-- CKEditor attaches to this -->
+            <textarea id="editor" name="content"></textarea>
+        </div>
 
-  </form>
-
+        <button type="submit" class="btn-primary" style="margin-top:14px; width:100%;">
+            PUBLISH INTELLIGENCE
+        </button>
+    </form>
 </section>
+
+<!-- Additional CKEditor styling to fit Dark Mode -->
+<style>
+.ck-editor__editable {
+    min-height: 300px;
+    background-color: var(--panel-soft) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+.ck-toolbar {
+    background-color: #1e293b !important;
+    border-color: var(--border) !important;
+}
+.ck.ck-button {
+    color: #cbd5e1 !important;
+}
+</style>
 
 {% endblock %}

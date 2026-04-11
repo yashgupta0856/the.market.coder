@@ -1,64 +1,52 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section class="panel" style="max-width:700px;margin:60px auto;">
+<section class="panel auth-panel fade-in" style="max-width: 600px;">
+    <div class="hero-title" style="color: var(--warning);">ADMIN COMMAND</div>
+    <div class="hero-symbol" style="font-size:26px;">TRANSMIT CHART</div>
 
-  <div style="text-align:center;margin-bottom:24px;">
-    <div class="hero-title">ADMIN PANEL</div>
-    <div class="hero-symbol" style="font-size:22px;">
-      CREATE COMMUNITY POST
+    {% if message %}
+    <div style="margin-top:16px; padding:12px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7; border-radius:10px; font-size:14px; font-weight:500;">
+        {{ message }}
     </div>
-  </div>
+    {% endif %}
 
-  <form method="post"
-        action="/api/community/create"
-        enctype="multipart/form-data"
-        style="display:flex;flex-direction:column;gap:16px;">
+    <form method="post" action="/api/community/create" enctype="multipart/form-data" class="auth-form" style="margin-top: 24px;">
+        
+        <div class="form-group">
+            <label>Stock Symbol</label>
+            <input type="text" name="symbol" required placeholder="e.g. RELIANCE">
+        </div>
 
-    <label class="form-label">Symbol</label>
-    <input type="text"
-           name="symbol"
-           required
-           placeholder="e.g. TCS"
-           class="form-input">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+                <label>Entry</label>
+                <input type="text" name="entry" placeholder="₹">
+            </div>
+            <div class="form-group">
+                <label>Stop Loss</label>
+                <input type="text" name="stop_loss" placeholder="₹">
+            </div>
+            <div class="form-group">
+                <label>Target</label>
+                <input type="text" name="target" placeholder="₹">
+            </div>
+        </div>
 
-    <label class="form-label">Entry Price</label>
-    <input type="text"
-           name="entry"
-           placeholder="Optional"
-           class="form-input">
+        <div class="form-group">
+            <label>Upload Chart (Image)</label>
+            <input type="file" name="image" required style="padding: 10px; background: rgba(0,0,0,0.2);">
+        </div>
 
-    <label class="form-label">Stop Loss</label>
-    <input type="text"
-           name="stop_loss"
-           placeholder="Optional"
-           class="form-input">
+        <div class="form-group">
+            <label>Commentary / Notes</label>
+            <textarea name="commentary" rows="3" placeholder="Setup thesis ..."></textarea>
+        </div>
 
-    <label class="form-label">Target</label>
-    <input type="text"
-           name="target"
-           placeholder="Optional"
-           class="form-input">
-
-    <label class="form-label">Commentary</label>
-    <textarea name="commentary"
-              rows="6"
-              placeholder="Write detailed analysis..."
-              class="form-input"></textarea>
-
-    <label class="form-label">Upload Chart Image</label>
-    <input type="file"
-           name="image"
-           accept="image/*">
-
-    <button type="submit"
-            class="risk-btn"
-            style="margin-top:20px;">
-      PUBLISH COMMUNITY POST
-    </button>
-
-  </form>
-
+        <button type="submit" class="btn-primary" style="margin-top:14px; width:100%;">
+            PUBLISH TO COMMUNITY
+        </button>
+    </form>
 </section>
 
 {% endblock %}

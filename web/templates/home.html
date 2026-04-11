@@ -1,131 +1,69 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- HERO -->
-<section class="hero" style="margin-bottom:90px;">
-  <h1>Discover High-Quality Stocks Using AI</h1>
+<!-- MASSIVE STARTUP HERO -->
+<section class="startup-hero fade-in">
+  <!-- <div class="hero-badge">QuantFusion AI Platform v2.0</div> -->
+  <h1>Discover High-Quality<br>Stocks Using AI</h1>
   <p>
     the.market.coder scans the Indian stock market daily to identify
     institutional-grade volatility contraction setups used by
-    professional investors.
+    professional investors. Clean data, ruthless execution.
   </p>
 
-  <div class="hero-actions" style="margin-top:30px;">
+  <div class="hero-actions">
     <a href="/dashboard" class="btn-primary">View Dashboard</a>
+    <a href="/news" class="btn-secondary">Read Market Intelligence</a>
   </div>
 </section>
 
 <!-- KEY STATS / NUMBERS -->
-<section
-  style="
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:24px;
-    margin-bottom:90px;
-  "
->
-  <div class="panel" style="text-align:center;">
-    <h2 style="font-size:34px;color:var(--primary);margin-bottom:6px;">5,000+</h2>
-    <p class="subtitle">Stocks scanned daily across NSE & BSE</p>
+<section class="fade-in"
+  style="animation-delay: 0.15s; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:24px; margin-bottom:100px;">
+  <div class="stat-card" style="text-align:center;">
+    <h2 style="font-size:38px; font-weight: 800; color:var(--primary); margin:0 0 8px 0; letter-spacing: -1px;">5,000+
+    </h2>
+    <p class="subtitle" style="margin:0; font-size: 14px;">Stocks scanned daily across NSE & BSE</p>
   </div>
 
-  <!-- <div class="panel" style="text-align:center;">
-    <h2 style="font-size:34px;color:var(--secondary);margin-bottom:6px;">50–80</h2>
-    <p class="subtitle">VCP-qualified candidates per market cycle</p>
-  </div> -->
-
-  <div class="panel" style="text-align:center;">
-    <h2 style="font-size:34px;color:var(--warning);margin-bottom:6px;">100%</h2>
-    <p class="subtitle">Rule-based, explainable model logic</p>
+  <div class="stat-card" style="text-align:center;">
+    <h2 style="font-size:38px; font-weight: 800; color:var(--warning); margin:0 0 8px 0; letter-spacing: -1px;">100%
+    </h2>
+    <p class="subtitle" style="margin:0; font-size: 14px;">Rule-based, explainable model logic</p>
   </div>
 
-  <div class="panel" style="text-align:center;">
-    <h2 style="font-size:34px;color:var(--danger);margin-bottom:6px;">0</h2>
-    <p class="subtitle">Tips, predictions, or discretionary bias</p>
+  <div class="stat-card" style="text-align:center;">
+    <h2 style="font-size:38px; font-weight: 800; color:var(--danger); margin:0 0 8px 0; letter-spacing: -1px;">0</h2>
+    <p class="subtitle" style="margin:0; font-size: 14px;">Tips, predictions, or discretionary bias</p>
   </div>
 </section>
-
-<!-- HOW IT WORKS -->
-<!-- <section class="panel" style="margin-bottom:90px;">
-  <h2 style="margin-bottom:28px;">How the.market.coder Works</h2>
-
-  <div
-    style="
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-      gap:28px;
-    "
-  >
-    <div class="feature-card">
-      <h3>01 · Market Scan</h3>
-      <p>
-        Every trading day, the.market.coder scans thousands of stocks using
-        institutional volatility contraction rules.
-      </p>
-    </div>
-
-    <div class="feature-card">
-      <h3>02 · Sector Filtering</h3>
-      <p>
-        Stocks are filtered further using sector relative strength,
-        capital impact, and rotation logic.
-      </p>
-    </div>
-
-    <div class="feature-card">
-      <h3>03 · Risk & Ranking</h3>
-      <p>
-        Final candidates are ranked and stress-tested using Monte Carlo
-        simulations before appearing on the dashboard.
-      </p>
-    </div>
-  </div>
-</section> -->
 
 <!-- FEATURES WITH VISUAL WEIGHT -->
-<section
-  style="
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-    gap:32px;
-    margin-bottom:90px;
-  "
->
+<section class="fade-in"
+  style="animation-delay: 0.3s; display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:32px; margin-bottom:120px;">
   <div class="panel">
-    <h3>AI Market Scanner</h3>
-    <p style="color:var(--muted);line-height:1.6;">
+    <h3 style="margin-top:0; font-size: 20px; color: #fff;">AI Market Scanner</h3>
+    <p style="color:var(--muted); line-height:1.6; font-size: 15px; margin-bottom:0;">
       Automatically filters thousands of stocks using disciplined,
-      institutional-style VCP logic.
+      institutional-style VCP logic. Validates depth, contraction counts, and breakouts.
     </p>
   </div>
 
   <div class="panel">
-    <h3>Sector Intelligence</h3>
-    <p style="color:var(--muted);line-height:1.6;">
+    <h3 style="margin-top:0; font-size: 20px; color: #fff;">Sector Intelligence</h3>
+    <p style="color:var(--muted); line-height:1.6; font-size: 15px; margin-bottom:0;">
       Identify which sectors are attracting smart capital and sustaining
-      relative strength.
+      relative strength. We trace the big rotation flows.
     </p>
   </div>
 
   <div class="panel">
-    <h3>Risk Visualization</h3>
-    <p style="color:var(--muted);line-height:1.6;">
+    <h3 style="margin-top:0; font-size: 20px; color: #fff;">Risk Visualization</h3>
+    <p style="color:var(--muted); line-height:1.6; font-size: 15px; margin-bottom:0;">
       Monte Carlo simulations quantify downside risk and probability
-      before you enter a trade.
+      before you enter a trade. Navigate the tape with eyes wide open.
     </p>
   </div>
-</section>
-
-<!-- PHILOSOPHY -->
-<section class="panel" style="text-align:center;">
-  <h2>Built for Serious Investors</h2>
-  <p style="color:var(--muted);max-width:820px;margin:18px auto;line-height:1.7;">
-    the.market.coder is not a prediction engine.
-    <br><br>
-    It is a decision-support system built on price action,
-    volume behavior, and market structure —
-    designed to help you operate with discipline and clarity.
-  </p>
 </section>
 
 {% endblock %}
