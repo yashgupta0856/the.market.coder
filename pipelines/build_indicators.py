@@ -6,27 +6,8 @@ from indicators.volatility import true_range, atr, rolling_std, range_compressio
 from indicators.trend import linear_regression_slope
 
 from utils.mongo import get_collection
+from utils.mongo_writer import df_to_mongo
 
-
-
-# Mongo Writer Helper
-
-
-def df_to_mongo(df, collection_name, clear_existing=True, batch_size=1000):
-    if df is None or df.empty:
-        return 0
-
-    col = get_collection(collection_name)
-
-    if clear_existing:
-        col.delete_many({})
-
-    records = df.to_dict(orient="records")
-
-    for i in range(0, len(records), batch_size):
-        col.insert_many(records[i:i + batch_size])
-
-    return len(records)
 
 
 

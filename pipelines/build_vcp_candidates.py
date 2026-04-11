@@ -2,16 +2,7 @@ import pandas as pd
 
 from scanners.vcp_scanner import scan_universe
 from utils.mongo import get_collection
-
-
-def df_to_mongo(df, collection_name, clear_existing=True):
-    col = get_collection(collection_name)
-
-    if clear_existing:
-        col.delete_many({})
-
-    if not df.empty:
-        col.insert_many(df.to_dict(orient="records"))
+from utils.mongo_writer import df_to_mongo
 
 
 def run_phase3():
@@ -24,6 +15,24 @@ def run_phase3():
     df["date"] = pd.to_datetime(df["date"])
 
     results = scan_universe(df)
+
+    # Summary stats
+    total = len(results)
+    candidates = results["vcp_candidate"].sum()
+    triggers = results["is_breakout"].sum() if "is_breakout" in results.columns else 0
+
+    quality_counts = results["vcp_quality"].value_counts().to_dict() if "vcp_quality" in results.columns else {}
+
+    print(f"VCP Scan Results:")
+    print(f"  Total symbols scanned: {total}")
+    print(f"  VCP candidates:        {candidates}")
+    print(f"  Active breakouts:      {triggers}")
+
+    if quality_counts:
+        print(f"  Quality breakdown:")
+        for level in ["trigger", "textbook", "strong", "emerging"]:
+            if level in quality_counts:
+                print(f"    {level:>10}: {quality_counts[level]}")
 
     print("Storing vcp_candidates in MongoDB...")
     df_to_mongo(results, "vcp_candidates")

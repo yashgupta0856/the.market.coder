@@ -159,6 +159,8 @@
             <th>Rank</th>
             <th>Symbol</th>
             <th>CMP</th>
+            <th>Quality</th>
+            <th>Contractions</th>
             <th>Risk</th>
             <th>Chart</th>
           </tr>
@@ -169,6 +171,17 @@
             <td>{{ s.rank }}</td>
             <td class="rank-symbol">{{ s.symbol }}</td>
             <td>{{ "%.2f"|format(s.close) }}</td>
+            <td>
+              <span class="badge 
+                {% if s.vcp_quality == 'trigger' %} badge-success
+                {% elif s.vcp_quality == 'textbook' %} badge-primary
+                {% elif s.vcp_quality == 'strong' %} badge-warning
+                {% else %} badge-secondary 
+                {% endif %}">
+                {{ s.vcp_quality|upper if s.vcp_quality else 'NONE' }}
+              </span>
+            </td>
+            <td>{{ s.contraction_count if s.contraction_count else 0 }}</td>
             <td>
               <button class="risk-btn btn-primary"
                 onclick="openMonteCarlo('{{ s.symbol }}')">Risk</button>

@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from utils.mongo import get_collection
 
 
 def create_post(data: dict):
     col = get_collection("community_posts")
-    data["created_at"] = datetime.utcnow()
+    data["created_at"] = datetime.now(timezone.utc)
     col.insert_one(data)
 
 

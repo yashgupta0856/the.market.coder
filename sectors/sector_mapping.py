@@ -17,10 +17,6 @@ def load_sector_mapping():
     return df
 
 
-df = load_sector_mapping()
-print(df.head())
-
-
 def get_sector_for_symbol(symbol, mapping_df):
     row = mapping_df[mapping_df["symbol"] == symbol]
     if row.empty:
@@ -33,11 +29,3 @@ def get_sector_index_for_symbol(symbol, mapping_df):
     if row.empty:
         return None
     return row.iloc[0]["sector_index"]
-
-
-
-
-
-df = load_sector_mapping()
-print(get_sector_for_symbol("TCS", df))
-print(get_sector_index_for_symbol("TCS", df))

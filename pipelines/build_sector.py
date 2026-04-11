@@ -15,6 +15,7 @@ from sectors.build_benchmarks_indicators import run_benchmark_pipeline
 
 from configs.data_sources import DEFAULT_START_DATE
 from utils.mongo import get_collection
+from utils.mongo_writer import df_to_mongo
 
 
 SECTORS = [
@@ -23,16 +24,6 @@ SECTORS = [
     "CNXINFRA", "CNXREALTY", "CNXMEDIA",
     "CNXPSUBANK", "CNXSERVICE"
 ]
-
-
-def df_to_mongo(df, collection_name, clear_existing=True):
-    col = get_collection(collection_name)
-
-    if clear_existing:
-        col.delete_many({})
-
-    if not df.empty:
-        col.insert_many(df.to_dict(orient="records"))
 
 
 def run_phase4():

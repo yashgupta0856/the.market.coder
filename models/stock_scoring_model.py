@@ -50,18 +50,20 @@ def clamp(x, low=0.0, high=1.0):
     return max(low, min(high, x))
 
 
-def compute_sniper_score(df):
+def compute_sniper_score(symbol_df: pd.DataFrame):
     """
-    df = symbol-level OHLCV dataframe (sorted by date)
+    symbol_df = symbol-level OHLCV dataframe with ema_20, ema_50 columns.
+    Must have at least 60 rows.
     """
+    symbol_df = symbol_df.sort_values("date")
 
-    latest = df.iloc[-1]
-
-    #  MOMENTUM (40%) 
-    if len(df) < 21:
+    if len(symbol_df) < 60:
         return None
 
-    close_20 = df.iloc[-21]["close"]
+    latest = symbol_df.iloc[-1]
+
+    #  MOMENTUM (40%) 
+    close_20 = symbol_df.iloc[-21]["close"]
     momentum_20 = (latest["close"] / close_20) - 1
     momentum_score = clamp(momentum_20 / 0.15)  # 15% = strong move
 
@@ -74,10 +76,10 @@ def compute_sniper_score(df):
     trend_score = sum(trend_conditions) / 3
 
     #  VOLUME (30%) 
-    recent_vol = df["volume"].iloc[-5:].mean()
-    base_vol = df["volume"].iloc[-30:].mean()
+    recent_vol = symbol_df["volume"].iloc[-5:].mean()
+    base_vol = symbol_df["volume"].iloc[-30:].mean()
 
-    if base_vol == 0:
+    if base_vol <= 0:
         return None
 
     volume_ratio = recent_vol / base_vol

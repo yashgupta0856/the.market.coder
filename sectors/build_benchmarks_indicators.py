@@ -6,31 +6,10 @@ from sectors.sector_indicators import (
 )
 
 from configs.data_sources import DEFAULT_START_DATE
-from utils.mongo import get_collection
+from utils.mongo_writer import df_to_mongo
 
 
 BENCHMARK_INDEX = "NSEI"
-
-
-def df_to_mongo(df: pd.DataFrame, collection_name: str):
-    """
-    Direct DataFrame → MongoDB insert.
-    Replaces old csv_to_mongo().
-    """
-
-    if df.empty:
-        return 0
-
-    col = get_collection(collection_name)
-
-    # Clear old benchmark data
-    col.delete_many({})
-
-    records = df.to_dict(orient="records")
-
-    col.insert_many(records)
-
-    return len(records)
 
 
 def run_benchmark_pipeline():

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from datetime import datetime
+from datetime import datetime, timezone
 
 from utils.mongo import get_collection
 from utils.cloudinary_uploader import upload_image
@@ -85,7 +85,7 @@ async def create_community_post(
         "commentary": commentary,
         "image_path": image_url,
         "author": "the.market.coder",
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     })
 
     return {

@@ -84,7 +84,7 @@ def login_user(
 
     users.update_one(
         {"email": email},
-        {"$set": {"last_login": datetime.utcnow()}}
+        {"$set": {"last_login": datetime.now(timezone.utc)}}
     )
 
     request.session["user_email"] = email

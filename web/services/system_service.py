@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from utils.mongo import get_collection
 
 
@@ -23,7 +23,7 @@ def get_system_stats():
     last_doc = final_col.find_one(sort=[("_id", -1)])
 
     if last_doc:
-        stats["last_run"] = datetime.utcnow().strftime(
+        stats["last_run"] = datetime.now(timezone.utc).strftime(
             "%Y-%m-%d %H:%M UTC"
         )
     else:

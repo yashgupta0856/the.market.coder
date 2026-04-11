@@ -3,6 +3,7 @@ from features.stock_filtering import filter_vcp_with_sector
 from models.stock_scoring_model import compute_stock_score
 from sectors.sector_rotation import build_sector_rotation
 from utils.mongo import get_collection
+from utils.mongo_writer import df_to_mongo
 
 
 
@@ -15,28 +16,6 @@ def mongo_to_df(collection_name: str) -> pd.DataFrame:
     if not data:
         return pd.DataFrame()
     return pd.DataFrame(data)
-
-
-def df_to_mongo(
-    df: pd.DataFrame,
-    collection_name: str,
-    clear_existing: bool = True,
-    batch_size: int = 1000
-):
-    if df is None or df.empty:
-        return 0
-
-    col = get_collection(collection_name)
-
-    if clear_existing:
-        col.delete_many({})
-
-    records = df.to_dict(orient="records")
-
-    for i in range(0, len(records), batch_size):
-        col.insert_many(records[i:i + batch_size])
-
-    return len(records)
 
 
 

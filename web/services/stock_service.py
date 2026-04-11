@@ -7,7 +7,14 @@ def get_ranked_vcp_stocks(limit=20):
     cursor = (
         col.find(
             {},
-            {"_id": 0, "symbol": 1, "close": 1, "rank": 1}
+            {
+                "_id": 0, 
+                "symbol": 1, 
+                "close": 1, 
+                "rank": 1,
+                "vcp_quality": 1,
+                "contraction_count": 1
+            }
         )
         .sort("rank", 1)
         .limit(limit)

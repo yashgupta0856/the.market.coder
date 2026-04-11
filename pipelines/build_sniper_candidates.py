@@ -1,59 +1,13 @@
 import pandas as pd
 
 from utils.mongo import get_collection
+from utils.mongo_writer import df_to_mongo
 from scanners.sniper_scanner import scan_universe_sniper
 from indicators.moving_averages import ema
+from models.stock_scoring_model import compute_sniper_score
 
 
-def df_to_mongo(df, collection_name, clear_existing=True):
-    col = get_collection(collection_name)
 
-    if clear_existing:
-        col.delete_many({})
-
-    if not df.empty:
-        col.insert_many(df.to_dict(orient="records"))
-
-
-def clamp(x, low=0.0, high=1.0):
-    return max(low, min(high, x))
-
-
-def compute_sniper_score(symbol_df: pd.DataFrame):
-    symbol_df = symbol_df.sort_values("date")
-
-    if len(symbol_df) < 60:
-        return None
-
-    latest = symbol_df.iloc[-1]
-
-    close_20 = symbol_df.iloc[-21]["close"]
-    momentum_20 = (latest["close"] / close_20) - 1
-    momentum_score = clamp(momentum_20 / 0.15)
-
-    trend_conditions = [
-        latest["close"] > latest["ema_20"],
-        latest["close"] > latest["ema_50"],
-        latest["ema_20"] > latest["ema_50"],
-    ]
-    trend_score = sum(trend_conditions) / 3
-
-    recent_vol = symbol_df["volume"].iloc[-5:].mean()
-    base_vol = symbol_df["volume"].iloc[-30:].mean()
-
-    if base_vol <= 0:
-        return None
-
-    volume_ratio = recent_vol / base_vol
-    volume_score = clamp((volume_ratio - 1) / 0.5)
-
-    final_score = (
-        0.4 * momentum_score +
-        0.3 * trend_score +
-        0.3 * volume_score
-    )
-
-    return round(final_score * 100, 2)
 
 
 def run_sniper_pipeline():

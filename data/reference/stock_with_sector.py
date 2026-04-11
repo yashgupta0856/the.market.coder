@@ -1,9 +1,10 @@
-def nse_sector_enrichment_to_csv(output_csv: str):
+def nse_sector_enrichment_to_csv(output_csv: str, max_workers=10):
     import pandas as pd
     import yfinance as yf
     import re
     import requests
     from io import StringIO
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
     
     # STEP 1: DOWNLOAD NSE EQUITY UNIVERSE
@@ -137,47 +138,91 @@ def nse_sector_enrichment_to_csv(output_csv: str):
     }
 
     
-    # STEP 3: ENRICH USING YFINANCE
+    # STEP 3: ENRICH USING YFINANCE (PARALLEL + RATE-LIMITED)
     
-    results = []
 
-    for symbol in symbols:
-        sector = None
-        sector_index = None
+    def _enrich_symbol(symbol):
+        """Fetch sector, industry, and fundamentals for a single symbol."""
+        import time
+        import logging
 
-        try:
-            ticker = yf.Ticker(f"{symbol}.NS")
-            info = ticker.info
+        # Suppress noisy yfinance HTTP error output
+        logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 
-            sector = info.get("sector")
-            industry = info.get("industry")
-            norm_industry = normalize(industry)
+        sector = "Others"
+        sector_index = "OTHERS"
+        fundamentals = {
+            "market_cap": None,
+            "revenue_growth": None,
+            "trailing_eps": None,
+            "forward_eps": None
+        }
 
-            for idx, inds in normalized_map.items():
-                for ind in inds:
-                    if ind and norm_industry and ind in norm_industry:
-                        sector_index = idx
-                        break
-                if sector_index:
-                    break
+        max_retries = 3
 
-        except Exception:
-            pass
+        for attempt in range(max_retries):
+            try:
+                ticker = yf.Ticker(f"{symbol}.NS")
+                info = ticker.info
 
-        
-        # FINAL FALLBACK NORMALIZATION
-        
-        if not sector:
-            sector = "Others"
+                sector_val = info.get("sector")
+                industry_val = info.get("industry")
 
-        if not sector_index:
-            sector_index = "OTHERS"
+                # Extract fundamentals
+                fundamentals["market_cap"] = info.get("marketCap")
+                fundamentals["revenue_growth"] = info.get("revenueGrowth")
+                fundamentals["trailing_eps"] = info.get("trailingEps")
+                fundamentals["forward_eps"] = info.get("forwardEps")
 
-        results.append({
+                if sector_val and industry_val:
+                    sector = sector_val
+                    norm_industry = normalize(industry_val)
+
+                    for idx, inds in normalized_map.items():
+                        for ind in inds:
+                            if ind and norm_industry and ind in norm_industry:
+                                sector_index = idx
+                                break
+                        if sector_index != "OTHERS":
+                            break
+                    break  # success — exit retry loop
+
+            except Exception:
+                if attempt < max_retries - 1:
+                    time.sleep(1 * (attempt + 1))  # backoff: 1s, 2s, 3s
+                    continue
+
+        return {
             "symbol": symbol,
             "sector": sector,
-            "sector_index": sector_index
-        })
+            "sector_index": sector_index,
+            **fundamentals
+        }
+
+
+    results = []
+    completed = 0
+    effective_workers = min(max_workers, 5)  # cap at 5 to avoid rate limiting
+
+    print(f"Enriching {len(symbols)} symbols with sector data "
+          f"({effective_workers} parallel threads, with retry)...")
+
+    with ThreadPoolExecutor(max_workers=effective_workers) as executor:
+        futures = {
+            executor.submit(_enrich_symbol, sym): sym
+            for sym in symbols
+        }
+
+        for future in as_completed(futures):
+            completed += 1
+            if completed % 200 == 0:
+                print(f"  Sector enrichment progress: {completed}/{len(symbols)}")
+            results.append(future.result())
+
+    # Count how many got real sectors vs fallback
+    real_sectors = sum(1 for r in results if r["sector"] != "Others")
+    print(f"Sector enrichment complete: {len(results)} symbols processed "
+          f"({real_sectors} matched, {len(results) - real_sectors} fallback)")
 
     
     # STEP 4: WRITE CSV
