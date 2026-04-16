@@ -202,7 +202,7 @@ def nse_sector_enrichment_to_csv(output_csv: str, max_workers=10):
 
     results = []
     completed = 0
-    effective_workers = min(max_workers, 5)  # cap at 5 to avoid rate limiting
+    effective_workers = min(max_workers, 8)  # raised from 5 to 8
 
     print(f"Enriching {len(symbols)} symbols with sector data "
           f"({effective_workers} parallel threads, with retry)...")

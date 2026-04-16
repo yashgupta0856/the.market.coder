@@ -49,7 +49,9 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
 # Phase 2 Runner
 
 
-def run_phase2():
+def run_phase2(max_workers=8):
+    from concurrent.futures import ThreadPoolExecutor
+
     col = get_collection("ohlcv_equities")
     ohlcv = pd.DataFrame(list(col.find({}, {"_id": 0})))
 
@@ -58,11 +60,14 @@ def run_phase2():
 
     ohlcv["date"] = pd.to_datetime(ohlcv["date"])
 
-    frames = []
+    def _process_symbol(args):
+        symbol, symbol_df = args
+        return compute_indicators(symbol_df)
 
-    for symbol, symbol_df in ohlcv.groupby("symbol"):
-        enriched = compute_indicators(symbol_df)
-        frames.append(enriched)
+    groups = list(ohlcv.groupby("symbol"))
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        frames = list(executor.map(_process_symbol, groups))
 
     final_df = pd.concat(frames, ignore_index=True)
 

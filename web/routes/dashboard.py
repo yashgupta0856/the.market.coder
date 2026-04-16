@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from concurrent.futures import ThreadPoolExecutor
 
 from web.services.system_service import get_system_stats
 from web.services.sector_service import get_top_sectors_by_regime
@@ -42,18 +43,29 @@ def dashboard(request: Request):
     if not user_has_active_access(email):
         return RedirectResponse("/renew", status_code=302)
 
+    # Run all independent service calls in parallel
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        f_stats = pool.submit(get_system_stats)
+        f_sectors = pool.submit(get_top_sectors_by_regime)
+        f_ranked = pool.submit(get_ranked_vcp_stocks, 100)
+        f_explain = pool.submit(get_rank1_stock_explanation)
+        f_vcp_counts = pool.submit(get_sector_wise_vcp_counts, 10)
+        f_remaining = pool.submit(get_remaining_vcp_symbols)
+        f_rotating = pool.submit(get_top_rotating_sectors, 10)
+        f_sniper = pool.submit(get_sniper_stocks, 2000)
+        f_sniper_ranked = pool.submit(get_ranked_sniper_stocks, 2000)
 
+    system_stats = f_stats.result()
+    sector_cards = f_sectors.result()
+    ranked_stocks = f_ranked.result()
+    rank1_left, rank1_right = f_explain.result()
+    sector_vcp_counts = f_vcp_counts.result()
+    remaining_vcp_stocks = f_remaining.result()
+    rotating_sectors = f_rotating.result()
+    sniper_stocks = f_sniper.result()
+    sniper_ranked = f_sniper_ranked.result()
 
-    system_stats = get_system_stats()
-    sector_cards = get_top_sectors_by_regime()
-    ranked_stocks = get_ranked_vcp_stocks(limit=100)
-    rank1_left, rank1_right = get_rank1_stock_explanation()
-    sector_vcp_counts = get_sector_wise_vcp_counts(limit=10)
-    remaining_vcp_stocks = get_remaining_vcp_symbols()
-    rotating_sectors = get_top_rotating_sectors(limit=10)
-    sniper_stocks = get_sniper_stocks(limit=2000)
-    sniper_ranked = get_ranked_sniper_stocks(limit=2000)
-
+    # MC depends on rank1 result, so it runs after
     mc_data = None
     if rank1_left:
         mc_data = get_monte_carlo_for_symbol(rank1_left["symbol"])

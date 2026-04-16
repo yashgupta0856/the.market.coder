@@ -25,18 +25,30 @@ def mongo_to_df(collection_name: str) -> pd.DataFrame:
 def run_phase5_1() -> pd.DataFrame:
     print("Reading required collections from MongoDB...")
 
-    stocks = mongo_to_df("equity_indicators")
+    stocks_col = get_collection("equity_indicators")
     vcp = mongo_to_df("vcp_candidates")
     sector_regime = mongo_to_df("sector_regime")
     mapping = mongo_to_df("stock_sector_mapping")
 
-    if stocks.empty:
+    # Find latest date via a single targeted query (instead of loading all rows)
+    latest_doc = stocks_col.find_one(
+        {}, {"date": 1, "_id": 0}, sort=[("date", -1)]
+    )
+
+    if not latest_doc:
         raise RuntimeError("equity_indicators collection is empty")
 
-    # Use latest date only
-    stocks["date"] = pd.to_datetime(stocks["date"])
-    latest_date = stocks["date"].max()
-    stocks_latest = stocks[stocks["date"] == latest_date].copy()
+    latest_date = latest_doc["date"]
+
+    # Query ONLY the latest date rows (~2000 instead of 200K+)
+    stocks_latest = pd.DataFrame(
+        list(stocks_col.find({"date": latest_date}, {"_id": 0}))
+    )
+
+    if stocks_latest.empty:
+        raise RuntimeError("No data found for latest date")
+
+    stocks_latest["date"] = pd.to_datetime(stocks_latest["date"])
 
     # Merge VCP flag
     stocks_latest = stocks_latest.merge(

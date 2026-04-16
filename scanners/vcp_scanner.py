@@ -419,12 +419,12 @@ def get_vcp_details(df: pd.DataFrame) -> dict:
 # =========================================================
 
 
-def scan_universe(indicator_df: pd.DataFrame) -> pd.DataFrame:
-    results = []
+def scan_universe(indicator_df: pd.DataFrame, max_workers=8) -> pd.DataFrame:
+    from concurrent.futures import ThreadPoolExecutor
 
-    for symbol, symbol_df in indicator_df.groupby("symbol"):
+    def _process_symbol(args):
+        symbol, symbol_df = args
         symbol_df = symbol_df.sort_values("date")
-
         try:
             details = get_vcp_details(symbol_df)
         except Exception:
@@ -440,7 +440,7 @@ def scan_universe(indicator_df: pd.DataFrame) -> pd.DataFrame:
                 "vcp_quality": "none"
             }
 
-        results.append({
+        return {
             "symbol": symbol,
             "vcp_candidate": details["vcp_candidate"],
             "contraction_count": details.get("contraction_count", 0),
@@ -451,6 +451,11 @@ def scan_universe(indicator_df: pd.DataFrame) -> pd.DataFrame:
             "base_depth_pct": details.get("base_depth_pct", 0.0),
             "base_length_days": details.get("base_length_days", 0),
             "vcp_quality": details.get("vcp_quality", "none")
-        })
+        }
+
+    groups = list(indicator_df.groupby("symbol"))
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        results = list(executor.map(_process_symbol, groups))
 
     return pd.DataFrame(results)

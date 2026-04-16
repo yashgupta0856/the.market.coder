@@ -16,25 +16,35 @@ def get_sniper_stocks(limit=2000):
     if not sniper_symbols:
         return []
 
-    result = []
+    # Single aggregation instead of N individual find_one() calls
+    price_docs = ohlcv_col.aggregate([
+        {"$match": {"symbol": {"$in": sniper_symbols}}},
+        {"$sort": {"date": -1}},
+        {
+            "$group": {
+                "_id": "$symbol",
+                "close": {"$first": "$close"},
+                "date": {"$first": "$date"}
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "symbol": "$_id",
+                "close": 1,
+                "date": 1
+            }
+        }
+    ])
 
-    for symbol in sniper_symbols:
-        latest = ohlcv_col.find_one(
-            {"symbol": symbol},
-            sort=[("date", -1)],
-            projection={"_id": 0, "close": 1, "date": 1}
-        )
-
-        if not latest:
-            continue
-
-        result.append({
-            "symbol": symbol,
-            "price": round(latest["close"], 2),
-            "date": latest["date"]
-        })
-
-    return result
+    return [
+        {
+            "symbol": doc["symbol"],
+            "price": round(doc["close"], 2),
+            "date": doc["date"]
+        }
+        for doc in price_docs
+    ]
 
 
 

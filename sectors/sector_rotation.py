@@ -43,9 +43,9 @@ def load_benchmark_indicators():
 # SECTOR BREADTH
 # =====================================================
 
-def compute_sector_breadth(window_col="roc_63"):
+def compute_sector_breadth(window_col="roc_63", fused_df=None):
 
-    df = load_stock_sector_fused()
+    df = fused_df if fused_df is not None else load_stock_sector_fused()
 
     required = {"symbol", "sector_index", window_col}
     if not required.issubset(df.columns):
@@ -70,9 +70,9 @@ def compute_sector_breadth(window_col="roc_63"):
 # CAPITAL WEIGHTED RETURN (FIXED)
 # =====================================================
 
-def compute_sector_capital_weighted_return(window_col="roc_63"):
+def compute_sector_capital_weighted_return(window_col="roc_63", fused_df=None):
 
-    df = load_stock_sector_fused()
+    df = fused_df if fused_df is not None else load_stock_sector_fused()
 
     required = {"symbol", "sector_index", "close", "volume", window_col}
     if not required.issubset(df.columns):
@@ -107,10 +107,10 @@ def compute_sector_capital_weighted_return(window_col="roc_63"):
 # RELATIVE STRENGTH VS MARKET
 # =====================================================
 
-def compute_sector_relative_strength(window_col="roc_63"):
+def compute_sector_relative_strength(window_col="roc_63", fused_df=None, bench_df=None):
 
-    stock_df = load_stock_sector_fused()
-    bench_df = load_benchmark_indicators()
+    stock_df = fused_df if fused_df is not None else load_stock_sector_fused()
+    bench_df = bench_df if bench_df is not None else load_benchmark_indicators()
 
     latest_stock = (
         stock_df.sort_values("date")
@@ -156,11 +156,17 @@ def build_sector_rotation(window_col="roc_63"):
     - breadth
     - capital weighted return
     - relative strength
+
+    Loads shared data ONCE and passes to all sub-functions.
     """
 
-    breadth = compute_sector_breadth(window_col)
-    cap_ret = compute_sector_capital_weighted_return(window_col)
-    rel     = compute_sector_relative_strength(window_col)
+    # Load shared data once (was loaded 3× before)
+    fused_df = load_stock_sector_fused()
+    bench_df = load_benchmark_indicators()
+
+    breadth = compute_sector_breadth(window_col, fused_df=fused_df)
+    cap_ret = compute_sector_capital_weighted_return(window_col, fused_df=fused_df)
+    rel     = compute_sector_relative_strength(window_col, fused_df=fused_df, bench_df=bench_df)
 
     df = (
         breadth

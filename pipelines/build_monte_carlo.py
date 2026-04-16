@@ -1,10 +1,11 @@
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor
 
 from analytics.monte_carlo import run_monte_carlo
 from utils.mongo import get_collection
 
 
-def build_monte_carlo():
+def build_monte_carlo(max_workers=8):
 
     # ===============================
     # 1️⃣ LOAD RANKED STOCKS FROM MONGO
@@ -27,40 +28,44 @@ def build_monte_carlo():
     symbols = list({doc["symbol"] for doc in ranked_docs})
 
     # ===============================
-    # 2️⃣ CLEAR OLD MONTE CARLO DATA
+    # 2️⃣ BATCH FETCH ALL PRICE DATA
+    # ===============================
+
+    all_prices = pd.DataFrame(
+        list(price_col.find(
+            {"symbol": {"$in": symbols}},
+            {"_id": 0, "date": 1, "close": 1, "symbol": 1}
+        ))
+    )
+
+    if all_prices.empty:
+        print("No price data found for ranked symbols.")
+        return
+
+    all_prices["date"] = pd.to_datetime(all_prices["date"])
+    all_prices = all_prices.sort_values(["symbol", "date"])
+
+    # ===============================
+    # 3️⃣ PARALLEL MONTE CARLO
     # ===============================
 
     mc_col.delete_many({})
 
-    docs = []
-
-
-    for symbol in symbols:
-
-        cursor = price_col.find(
-            {"symbol": symbol},
-            {"_id": 0, "date": 1, "close": 1}
-        )
-
-        data = list(cursor)
-
-        if len(data) < 60:
-            continue
-
-        df = pd.DataFrame(data)
-
-        df["date"] = pd.to_datetime(df["date"])
-        df = df.sort_values("date")
-
-        result = run_monte_carlo(df["close"])
-
-        docs.append({
+    def _run_mc(symbol):
+        symbol_prices = all_prices[all_prices["symbol"] == symbol]
+        if len(symbol_prices) < 60:
+            return None
+        result = run_monte_carlo(symbol_prices["close"])
+        return {
             "symbol": symbol,
             "metrics": result["metrics"],
             "paths": result["paths"]
-        })
+        }
 
-  
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        results = list(executor.map(_run_mc, symbols))
+
+    docs = [d for d in results if d is not None]
 
     if docs:
         mc_col.insert_many(docs)

@@ -11,9 +11,9 @@ if not MONGODB_URI:
 
 _client = MongoClient(
     MONGODB_URI,
-    serverSelectionTimeoutMS=60000,
-    connectTimeoutMS=60000,
-    socketTimeoutMS=60000,
+    serverSelectionTimeoutMS=100000,
+    connectTimeoutMS=100000,
+    socketTimeoutMS=100000,
     tls=True,
     retryWrites=True,
 )

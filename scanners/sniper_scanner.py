@@ -119,18 +119,24 @@ def is_sniper_candidate(symbol_df: pd.DataFrame) -> bool:
     return True
 
 
-def scan_universe_sniper(indicator_df: pd.DataFrame) -> pd.DataFrame:
-    results = []
+def scan_universe_sniper(indicator_df: pd.DataFrame, max_workers=8) -> pd.DataFrame:
+    from concurrent.futures import ThreadPoolExecutor
 
-    for symbol, symbol_df in indicator_df.groupby("symbol"):
+    def _process_symbol(args):
+        symbol, symbol_df = args
         try:
             is_sniper = is_sniper_candidate(symbol_df)
         except Exception:
             is_sniper = False
 
-        results.append({
+        return {
             "symbol": symbol,
             "sniper_candidate": is_sniper
-        })
+        }
+
+    groups = list(indicator_df.groupby("symbol"))
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        results = list(executor.map(_process_symbol, groups))
 
     return pd.DataFrame(results)
