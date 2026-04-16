@@ -12,24 +12,30 @@
   {% for doc in posts %}
   <div class="panel community-card" style="padding: 16px;">
     
-    {% if doc.post_type == "vcp_setup" %}
-      <div class="status-tag" style="background:var(--primary); color:#fff;">VCP SETUP</div>
-    {% elif doc.post_type == "breakout" %}
-      <div class="status-tag" style="background:var(--secondary); color:#064e3b;">BREAKOUT</div>
-    {% else %}
-      <div class="status-tag" style="background:var(--warning); color:#78350f;">ANALYSIS</div>
-    {% endif %}
+    <div class="status-tag" style="background:var(--primary); color:#fff; display:inline-block; margin-bottom:12px;">TRADE IDEA</div>
 
-    <img src="{{ doc.image_url }}" alt="Stock Chart">
+    {% if doc.image_path %}
+    <img src="{{ doc.image_path }}" alt="Stock Chart" style="width: 100%; border-radius: 8px; margin-bottom: 12px;">
+    {% endif %}
 
     <div style="padding: 10px 4px 0 4px;">
       <h3 style="margin:0 0 10px 0; font-size:20px; font-weight:800;">{{ doc.symbol }}</h3>
-      <p style="margin:0 0 16px 0; font-size:15px; color:#cbd5e1; line-height:1.6;">{{ doc.notes }}</p>
+      
+      <div style="display:flex; gap:12px; font-size:13px; font-weight:600; margin-bottom:12px;">
+        {% if doc.entry %}<span style="color:var(--primary);">Entry: {{ doc.entry }}</span>{% endif %}
+        {% if doc.target %}<span style="color:#6ee7b7;">Target: {{ doc.target }}</span>{% endif %}
+        {% if doc.stop_loss %}<span style="color:#fca5a5;">SL: {{ doc.stop_loss }}</span>{% endif %}
+      </div>
+
+      <p style="margin:0 0 16px 0; font-size:15px; color:#cbd5e1; line-height:1.6;">{{ doc.commentary }}</p>
+      
       <div style="font-size:12px; font-weight:600; color:var(--muted);">
         Posted {{ doc.created_at.strftime("%b %d, %Y") }}
       </div>
     </div>
   </div>
+  {% else %}
+  <p style="color:var(--muted); font-size:15px;">No community setups posted yet.</p>
   {% endfor %}
 </div>
 

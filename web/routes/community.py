@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form, Request
+from fastapi import APIRouter, UploadFile, File, Form, Request, BackgroundTasks
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, timezone
@@ -7,6 +7,7 @@ from utils.mongo import get_collection
 from utils.cloudinary_uploader import upload_image
 from web.services.access_control import user_has_active_access
 from web.services.role_guard import role_required
+from utils.telegram import send_community_alert
 
 router = APIRouter(tags=["Community"])
 templates = Jinja2Templates(directory="web/templates")
@@ -53,6 +54,7 @@ def community_page(request: Request):
 @router.post("/api/community/create")
 async def create_community_post(
     request: Request,
+    background_tasks: BackgroundTasks,
     symbol: str = Form(...),
     entry: str = Form(None),
     stop_loss: str = Form(None),
@@ -87,6 +89,17 @@ async def create_community_post(
         "author": "the.market.coder",
         "created_at": datetime.now(timezone.utc)
     })
+
+    # Dispatch Telegram Alert in the background
+    background_tasks.add_task(
+        send_community_alert,
+        symbol=symbol,
+        entry=entry,
+        stop_loss=stop_loss,
+        target=target,
+        commentary=commentary,
+        image_url=image_url
+    )
 
     return {
         "status": "success",

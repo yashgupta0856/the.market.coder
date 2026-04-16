@@ -33,11 +33,11 @@
   {% endfor %}
 
   <div class="panel sector-card">
-    <h4>Sector-wise VCP Counts</h4>
+    <h4>Granular Sector VCP Breakdowns</h4>
     <ul>
       {% for row in sector_vcp_counts %}
       <li>
-        <span>{{ row.sector_index }}</span>
+        <span>{{ row.granular_sector }}</span>
         <span class="badge">{{ row.vcp_count }}</span>
       </li>
       {% endfor %}
@@ -129,6 +129,7 @@
           <tr>
             <th>Rank</th>
             <th>Symbol</th>
+            <th>Sector</th>
             <th>CMP</th>
             <th>Quality</th>
             <th>Contractions</th>
@@ -141,6 +142,10 @@
           <tr>
             <td>{{ s.rank }}</td>
             <td class="rank-symbol">{{ s.symbol }}</td>
+            <td>
+               <span style="font-size:12px; font-weight:600; color:var(--muted);">{{ s.granular_sector }}</span><br>
+               <span style="font-size:11px; opacity:0.75;">{{ s.granular_subsector }}</span>
+            </td>
             <td>{{ "%.2f"|format(s.close) }}</td>
             <td>
               <span class="badge 

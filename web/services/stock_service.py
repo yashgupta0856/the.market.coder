@@ -13,7 +13,9 @@ def get_ranked_vcp_stocks(limit=20):
                 "close": 1, 
                 "rank": 1,
                 "vcp_quality": 1,
-                "contraction_count": 1
+                "contraction_count": 1,
+                "granular_sector": 1,
+                "granular_subsector": 1
             }
         )
         .sort("rank", 1)
@@ -30,7 +32,7 @@ def get_sector_wise_vcp_counts(limit=5):
         {"$match": {"vcp_candidate": True}},
         {
             "$group": {
-                "_id": "$sector_index",
+                "_id": "$granular_sector",
                 "vcp_count": {"$sum": 1}
             }
         },
@@ -39,7 +41,7 @@ def get_sector_wise_vcp_counts(limit=5):
         {
             "$project": {
                 "_id": 0,
-                "sector_index": "$_id",
+                "granular_sector": "$_id",
                 "vcp_count": 1
             }
         }
