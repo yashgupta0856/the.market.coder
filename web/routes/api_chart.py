@@ -35,7 +35,17 @@ def get_chart_data(symbol: str, limit: int = 150):
     if not data:
         return {"status": "not_found"}
 
-    data.reverse()
+    # Deduplicate by date (data is already sorted descending, so keep the first we see)
+    seen_dates = set()
+    unique_data = []
+    for d in data:
+        dt_str = normalize_date(d["date"])
+        if dt_str not in seen_dates:
+            seen_dates.add(dt_str)
+            unique_data.append(d)
+
+    # Reverse to make chronological for LightweightCharts
+    unique_data.reverse()
 
     candles = [
         {
@@ -45,7 +55,7 @@ def get_chart_data(symbol: str, limit: int = 150):
             "low": float(d["low"]),
             "close": float(d["close"]),
         }
-        for d in data
+        for d in unique_data
     ]
 
     volume = [
@@ -54,7 +64,7 @@ def get_chart_data(symbol: str, limit: int = 150):
             "value": float(d["volume"]),
             "color": "#26a69a" if d["close"] >= d["open"] else "#ef5350",
         }
-        for d in data
+        for d in unique_data
     ]
 
     return {
