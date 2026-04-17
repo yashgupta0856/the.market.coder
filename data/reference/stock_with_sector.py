@@ -24,103 +24,10 @@ def nse_sector_enrichment_to_csv(output_csv: str, max_workers=10):
     symbols = df["SYMBOL"].tolist()
 
     
-    # STEP 2: CNX SECTOR → INDUSTRY MAPPING
+    # STEP 2: GRANULAR SECTOR TAXONOMY
     
-    SECTOR_INDEX_MAP = {
-        "CNXAUTO": [
-            "Auto Manufacturers", "Auto Parts", "Auto & Truck Dealerships",
-            "Recreational Vehicles", "Specialty Automotive Retail",
-            "Farm & Heavy Construction Machinery", "Railroads",
-            "Trucking", "Marine Shipping", "Airports & Air Services"
-        ],
-        "CNXENERGY": [
-            "Oil & Gas Integrated", "Oil & Gas Refining & Marketing",
-            "Oil & Gas E&P", "Oil & Gas Equipment & Services",
-            "Thermal Coal", "Utilities—Regulated Electric",
-            "Utilities—Renewable", "Utilities—Independent Power Producers",
-            "Utilities—Regulated Gas", "Utilities—Regulated Water",
-            "Solar", "Wind", "Uranium", "Electrical Equipment & Parts"
-        ],
-        "CNXREALTY": [
-            "Real Estate—Development", "Real Estate Services",
-            "Real Estate—Diversified", "REIT—Residential",
-            "REIT—Office", "REIT—Industrial", "REIT—Retail",
-            "Property Management", "Infrastructure Operations"
-        ],
-        "CNXINFRA": [
-            "Engineering & Construction", "Infrastructure Operations",
-            "Building Products & Equipment", "Construction Materials",
-            "Heavy Electrical Equipment", "Conglomerates",
-            "Industrial Distribution", "Specialty Industrial Machinery",
-            "Tools & Accessories", "Waste Management"
-        ],
-        "CNXPHARMA": [
-            "Drug Manufacturers—General",
-            "Drug Manufacturers—Specialty & Generic",
-            "Biotechnology", "Medical Instruments & Supplies",
-            "Medical Devices", "Medical Care Facilities",
-            "Healthcare Plans", "Health Information Services",
-            "Diagnostics & Research", "Life Sciences Tools & Services"
-        ],
-        "CNXMETAL": [
-            "Steel", "Aluminum", "Copper", "Gold", "Silver",
-            "Other Industrial Metals & Mining",
-            "Diversified Metals & Mining",
-            "Iron & Steel", "Coking Coal",
-            "Building Materials", "Construction Materials",
-            "Paper & Paper Products", "Forest Products"
-        ],
-        "CNXMEDIA": [
-            "Entertainment", "Broadcasting", "Publishing",
-            "Advertising Agencies", "Telecom Services",
-            "Electronic Gaming & Multimedia",
-            "Internet Content & Information",
-            "Digital Media", "Communication Equipment"
-        ],
-        "CNXFMCG": [
-            "Packaged Foods", "Farm Products",
-            "Beverages—Non-Alcoholic",
-            "Beverages—Wineries & Distilleries",
-            "Household & Personal Products",
-            "Confectioners", "Tobacco",
-            "Specialty Retail", "Grocery Stores",
-            "Department Stores", "Luxury Goods",
-            "Footwear & Accessories",
-            "Textile Manufacturing",
-            "Apparel Manufacturing", "Apparel Retail"
-        ],
-        "CNXFIN": [
-            "Banks—Regional", "Banks—Diversified",
-            "Credit Services", "Asset Management",
-            "Capital Markets", "Insurance—Life",
-            "Insurance—Property & Casualty",
-            "Insurance Brokers",
-            "Financial Data & Stock Exchanges",
-            "Mortgage Finance",
-            "Financial Conglomerates",
-            "Shell Companies",
-            "Finacial Services"
-        ],
-        "CNXIT": [
-            "Information Technology Services",
-            "Software—Application",
-            "Software—Infrastructure",
-            "Communication Equipment",
-            "Consumer Electronics",
-            "Computer Hardware",
-            "Semiconductors",
-            "IT Consulting & Outsourcing",
-            "Cloud Computing",
-            "Cybersecurity",
-            "Electronic Components",
-            "Scientific & Technical Instruments"
-        ],
-        "NSEBANK":[
-            "Regional"
-        ]
-    }
+    from configs.sector_taxonomy import GRANULAR_MAP
 
-    
     # NORMALIZATION
     
     def normalize(text):
@@ -132,10 +39,12 @@ def nse_sector_enrichment_to_csv(output_csv: str, max_workers=10):
         text = re.sub(r"\s+", " ", text)
         return text.strip()
 
-    normalized_map = {
-        idx: [normalize(i) for i in inds]
-        for idx, inds in SECTOR_INDEX_MAP.items()
-    }
+    # Pre-compute normalized sub-sectors for fuzzy fallback
+    fuzzy_map = {}
+    for ind, (g_sec, g_subsec, cnx) in GRANULAR_MAP.items():
+        norm_sub = normalize(g_subsec)
+        if norm_sub and norm_sub not in fuzzy_map:
+            fuzzy_map[norm_sub] = (g_sec, g_subsec, cnx)
 
     
     # STEP 3: ENRICH USING YFINANCE (PARALLEL + RATE-LIMITED)
@@ -151,6 +60,8 @@ def nse_sector_enrichment_to_csv(output_csv: str, max_workers=10):
 
         sector = "Others"
         sector_index = "OTHERS"
+        granular_sec = "Others"
+        granular_subsec = "Unknown"
         fundamentals = {
             "market_cap": None,
             "revenue_growth": None,
@@ -176,15 +87,30 @@ def nse_sector_enrichment_to_csv(output_csv: str, max_workers=10):
 
                 if sector_val and industry_val:
                     sector = sector_val
-                    norm_industry = normalize(industry_val)
+                    granular_subsec = industry_val
 
-                    for idx, inds in normalized_map.items():
-                        for ind in inds:
-                            if ind and norm_industry and ind in norm_industry:
-                                sector_index = idx
-                                break
-                        if sector_index != "OTHERS":
-                            break
+                    if industry_val in GRANULAR_MAP:
+                        granular_sec, granular_subsec, sector_index = GRANULAR_MAP[industry_val]
+                    else:
+                        norm_industry = normalize(industry_val)
+                        found = False
+                        if norm_industry:
+                            for norm_sub, tup in fuzzy_map.items():
+                                if norm_sub in norm_industry or norm_industry in norm_sub:
+                                    granular_sec, granular_subsec, sector_index = tup
+                                    found = True
+                                    break
+                        if not found:
+                            try:
+                                from utils.mongo import get_collection
+                                unmapped = get_collection("unmapped_industries")
+                                unmapped.update_one(
+                                    {"industry": industry_val},
+                                    {"$inc": {"count": 1}},
+                                    upsert=True
+                                )
+                            except Exception:
+                                pass # ignore DB errors in thread
                     break  # success — exit retry loop
 
             except Exception:
@@ -196,6 +122,8 @@ def nse_sector_enrichment_to_csv(output_csv: str, max_workers=10):
             "symbol": symbol,
             "sector": sector,
             "sector_index": sector_index,
+            "granular_sector": granular_sec,
+            "granular_subsector": granular_subsec,
             **fundamentals
         }
 
