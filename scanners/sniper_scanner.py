@@ -1,29 +1,30 @@
+import numpy as np
 import pandas as pd
 
 
 def wma(series: pd.Series, period: int) -> pd.Series:
     """
-    Weighted Moving Average
+    Weighted Moving Average — optimised with np.dot.
     """
-    weights = range(1, period + 1)
+    weights = np.arange(1, period + 1, dtype=float)
+    total_weight = weights.sum()
     return series.rolling(period).apply(
-        lambda x: (x * weights).sum() / sum(weights),
-        raw=True
+        lambda x: np.dot(x, weights) / total_weight,
+        raw=True,
     )
 
 
-def resample_and_wma(df, timeframe: str, period: int):
+def resample_close(df, timeframe: str):
     """
-    timeframe: 'W' or 'M'
+    Resample daily data to weekly ('W') or monthly ('ME') and return
+    the last close per period.  Resampled ONCE per timeframe.
     """
-    resampled = (
-        df
-        .set_index("date")
+    return (
+        df.set_index("date")["close"]
         .resample(timeframe)
         .last()
         .dropna()
     )
-    return wma(resampled["close"], period)
 
 
 def is_sniper_candidate(symbol_df: pd.DataFrame) -> bool:
@@ -38,77 +39,66 @@ def is_sniper_candidate(symbol_df: pd.DataFrame) -> bool:
 
     df = symbol_df.sort_values("date").copy()
 
-    
-    # DAILY WMAs
-    
-    df["wma_1"] = wma(df["close"], 1)
+    # ── DAILY WMAs ────────────────────────────────────────────────────
     df["wma_12"] = wma(df["close"], 12)
     df["wma_20"] = wma(df["close"], 20)
 
     latest = df.iloc[-1]
+    latest_close = latest["close"]
 
-    
-    # WEEKLY / MONTHLY WMAs
-    
-    weekly_wma_6 = resample_and_wma(df, "W", 6)
-    weekly_wma_12 = resample_and_wma(df, "W", 12)
+    # ── WEEKLY / MONTHLY — resample ONCE per timeframe ────────────────
+    weekly_close = resample_close(df, "W")
+    monthly_close = resample_close(df, "ME")
 
-    monthly_wma_2 = resample_and_wma(df, "M", 2)
-    monthly_wma_4 = resample_and_wma(df, "M", 4)
-
-    if len(weekly_wma_12) < 1 or len(monthly_wma_4) < 1:
+    if len(weekly_close) < 12 or len(monthly_close) < 4:
         return False
 
-    # Latest higher-timeframe values
-    w_wma_6 = weekly_wma_6.iloc[-1]
-    w_wma_12 = weekly_wma_12.iloc[-1]
-    m_wma_2 = monthly_wma_2.iloc[-1]
-    m_wma_4 = monthly_wma_4.iloc[-1]
+    w_wma_6 = wma(weekly_close, 6).iloc[-1]
+    w_wma_12 = wma(weekly_close, 12).iloc[-1]
+    m_wma_2 = wma(monthly_close, 2).iloc[-1]
+    m_wma_4 = wma(monthly_close, 4).iloc[-1]
 
-    
-    # SNIPER CONDITIONS
-    
+    # ── SNIPER CONDITIONS (percentage-based thresholds) ───────────────
+    # Replaced absolute ₹ offsets with percentage multipliers so the
+    # conditions scale properly across all price levels.
 
-    # 1. Daily WMA(1) > Monthly WMA(2) + 1
-    if latest["wma_1"] <= m_wma_2 + 1:
+    # 1. Close > Monthly WMA(2) × 1.005   (was: + 1)
+    if latest_close <= m_wma_2 * 1.005:
         return False
 
-    # 2. Monthly WMA(2) > Monthly WMA(4) + 2
-    if m_wma_2 <= m_wma_4 + 2:
+    # 2. Monthly WMA(2) > Monthly WMA(4) × 1.01   (was: + 2)
+    if m_wma_2 <= m_wma_4 * 1.01:
         return False
 
-    # 3. Daily WMA(1) > Weekly WMA(6) + 2
-    if latest["wma_1"] <= w_wma_6 + 2:
+    # 3. Close > Weekly WMA(6) × 1.01   (was: + 2)
+    if latest_close <= w_wma_6 * 1.01:
         return False
 
-    # 4. Weekly WMA(6) > Weekly WMA(12) + 2
-    if w_wma_6 <= w_wma_12 + 2:
+    # 4. Weekly WMA(6) > Weekly WMA(12) × 1.01   (was: + 2)
+    if w_wma_6 <= w_wma_12 * 1.01:
         return False
 
-    # 5. Daily WMA(1) > 4 days ago WMA(12) + 2
-    if df["wma_12"].iloc[-5] is None:
+    # 5. Close > 4-days-ago WMA(12) × 1.01   (was: + 2)
+    wma12_4d_ago = df["wma_12"].iloc[-5]
+    if wma12_4d_ago is None or pd.isna(wma12_4d_ago):
         return False
-    if latest["wma_1"] <= df["wma_12"].iloc[-5] + 2:
-        return False
-
-    # 6. Daily WMA(1) > 2 days ago WMA(20) + 2
-    if df["wma_20"].iloc[-3] is None:
-        return False
-    if latest["wma_1"] <= df["wma_20"].iloc[-3] + 2:
+    if latest_close <= wma12_4d_ago * 1.01:
         return False
 
-    
-    # PRICE FILTER
-    
-    if not (25 <= latest["close"] <= 500):
+    # 6. Close > 2-days-ago WMA(20) × 1.01   (was: + 2)
+    wma20_2d_ago = df["wma_20"].iloc[-3]
+    if wma20_2d_ago is None or pd.isna(wma20_2d_ago):
+        return False
+    if latest_close <= wma20_2d_ago * 1.01:
         return False
 
-    
-    # WEEKLY VOLUME FILTER
-    
+    # ── PRICE FILTER ──────────────────────────────────────────────────
+    if not (25 <= latest_close <= 500):
+        return False
+
+    # ── WEEKLY VOLUME FILTER ──────────────────────────────────────────
     weekly_volume = (
-        df
-        .set_index("date")
+        df.set_index("date")
         .resample("W")["volume"]
         .sum()
     )
@@ -119,8 +109,15 @@ def is_sniper_candidate(symbol_df: pd.DataFrame) -> bool:
     return True
 
 
-def scan_universe_sniper(indicator_df: pd.DataFrame, max_workers=8) -> pd.DataFrame:
+def scan_universe_sniper(indicator_df, max_workers=8) -> pd.DataFrame:
     from concurrent.futures import ThreadPoolExecutor
+
+    if isinstance(indicator_df, pd.DataFrame):
+        groups = list(indicator_df.groupby("symbol"))
+    elif isinstance(indicator_df, dict):
+        groups = list(indicator_df.items())
+    else:
+        groups = list(indicator_df)
 
     def _process_symbol(args):
         symbol, symbol_df = args
@@ -133,8 +130,6 @@ def scan_universe_sniper(indicator_df: pd.DataFrame, max_workers=8) -> pd.DataFr
             "symbol": symbol,
             "sniper_candidate": is_sniper
         }
-
-    groups = list(indicator_df.groupby("symbol"))
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         results = list(executor.map(_process_symbol, groups))

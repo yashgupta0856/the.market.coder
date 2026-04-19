@@ -1,20 +1,35 @@
-import pandas as pd
-
 from scanners.vcp_scanner import scan_universe
-from utils.mongo import get_collection
 from utils.mongo_writer import df_to_mongo
+from utils.symbol_loader import load_symbol_frames
+
+
+VCP_HISTORY_BARS = 252
+VCP_PROJECTION = {
+    "symbol": 1,
+    "date": 1,
+    "close": 1,
+    "high": 1,
+    "low": 1,
+    "volume": 1,
+    "sma_50": 1,
+    "sma_200": 1,
+    "reg_slope_100": 1,
+    "atr_14": 1,
+}
 
 
 def run_phase3():
-    col = get_collection("equity_indicators")
-    df = pd.DataFrame(list(col.find({}, {"_id": 0})))
+    symbol_frames = load_symbol_frames(
+        "equity_indicators",
+        projection=VCP_PROJECTION,
+        limit_per_symbol=VCP_HISTORY_BARS,
+        max_workers=8,
+    )
 
-    if df.empty:
+    if not symbol_frames:
         raise RuntimeError("equity_indicators collection is empty")
 
-    df["date"] = pd.to_datetime(df["date"])
-
-    results = scan_universe(df)
+    results = scan_universe(symbol_frames)
 
     # Summary stats
     total = len(results)

@@ -1,4 +1,5 @@
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from sectors.sector_indicators import (
     fetch_sector_ohlcv,
@@ -26,23 +27,41 @@ SECTORS = [
 ]
 
 
+def _fetch_and_compute(sector):
+    """Fetch OHLCV from Yahoo and compute indicators (thread-safe)."""
+    ohlcv = fetch_sector_ohlcv(sector, start=DEFAULT_START_DATE)
+    return compute_sector_indicators(ohlcv)
+
+
 def run_phase4():
     print("Running Benchmark Pipeline")
     run_benchmark_pipeline()
 
-    #  Sector Indicators 
-    frames = []
+    #  Sector Indicators — parallel Yahoo fetch (was sequential)
+    print(f"Fetching {len(SECTORS)} sector indices in parallel...")
 
-    for sector in SECTORS:
-        ohlcv = fetch_sector_ohlcv(sector, start=DEFAULT_START_DATE)
-        enriched = compute_sector_indicators(ohlcv)
-        frames.append(enriched)
+    frames = []
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = {
+            pool.submit(_fetch_and_compute, s): s for s in SECTORS
+        }
+
+        for future in as_completed(futures):
+            sector = futures[future]
+            try:
+                enriched = future.result()
+                frames.append(enriched)
+            except Exception as e:
+                print(f"  WARNING: sector {sector} failed: {e}")
+
+    if not frames:
+        raise RuntimeError("All sector fetches failed")
 
     sector_df = pd.concat(frames, ignore_index=True)
 
     df_to_mongo(sector_df, "sector_indicators")
 
-    #  Sector Strength 
+    #  Sector Strength
     latest_date = sector_df["date"].max()
     sector_latest = sector_df[sector_df["date"] == latest_date]
 
@@ -61,7 +80,7 @@ def run_phase4():
 
     df_to_mongo(rs_final, "sector_strength")
 
-    #  Sector Regime 
+    #  Sector Regime
     regime_df = classify_sector_regimes(rs_final)
     df_to_mongo(regime_df, "sector_regime")
 

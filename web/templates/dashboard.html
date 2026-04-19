@@ -220,23 +220,11 @@
           </tr>
         </thead>
         <tbody>
-          {% for s in sniper_ranked %}
           <tr>
-            <!-- REAL RANK FROM DB -->
-            <td><strong>#{{ s.rank }}</strong></td>
-
-            <td class="rank-symbol">{{ s.symbol }}</td>
-
-            <td>{{ "%.2f"|format(s.price) }}</td>
-            <td>{{ s.sniper_score }}</td>
-
-            <td>
-              <button class="risk-btn btn-secondary" onclick="openChart('{{ s.symbol }}')">
-                Chart
-              </button>
+            <td colspan="5" id="sniper-loading-cell" style="text-align:center; color:var(--muted);">
+              Sniper data will load when you open this tab.
             </td>
           </tr>
-          {% endfor %}
         </tbody>
       </table>
     </div>
@@ -290,6 +278,9 @@
 <!-- ================= FULL JS ================= -->
 <script>
   /* ---------- MODE TOGGLE ---------- */
+  let sniperLoaded = false;
+  let sniperLoading = false;
+
   function showVCP() {
     document.getElementById("mode-vcp").classList.add("active");
     document.getElementById("mode-sniper").classList.remove("active");
@@ -304,9 +295,71 @@
 
     document.getElementById("btn-sniper").classList.add("active");
     document.getElementById("btn-vcp").classList.remove("active");
+
+    if (!sniperLoaded && !sniperLoading) {
+      loadSniperRows();
+    }
   }
 
   document.addEventListener("DOMContentLoaded", showVCP);
+
+  async function loadSniperRows() {
+    sniperLoading = true;
+
+    const tbody = document.querySelector("#mode-sniper tbody");
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center; color:var(--muted);">
+          Loading sniper data...
+        </td>
+      </tr>
+    `;
+
+    try {
+      const res = await fetch("/api/sniper/ranked");
+      const data = await res.json();
+
+      if (!data || data.status !== "success") {
+        throw new Error("Sniper load failed");
+      }
+
+      if (!data.rows.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align:center; color:var(--muted);">
+              No sniper candidates found.
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = data.rows.map(row => `
+          <tr>
+            <td><strong>#${row.rank}</strong></td>
+            <td class="rank-symbol">${row.symbol}</td>
+            <td>${row.price == null ? "—" : Number(row.price).toFixed(2)}</td>
+            <td>${row.sniper_score}</td>
+            <td>
+              <button class="risk-btn btn-secondary" onclick="openChart('${row.symbol}')">
+                Chart
+              </button>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      sniperLoaded = true;
+    } catch (error) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center; color:#fca5a5;">
+            Failed to load sniper data.
+          </td>
+        </tr>
+      `;
+    } finally {
+      sniperLoading = false;
+    }
+  }
 
 
   /* ---------- MONTE CARLO ---------- */

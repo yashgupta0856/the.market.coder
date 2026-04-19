@@ -44,6 +44,10 @@ def build_monte_carlo(max_workers=8):
 
     all_prices["date"] = pd.to_datetime(all_prices["date"])
     all_prices = all_prices.sort_values(["symbol", "date"])
+    price_frames = {
+        symbol: symbol_df
+        for symbol, symbol_df in all_prices.groupby("symbol")
+    }
 
     # ===============================
     # 3️⃣ PARALLEL MONTE CARLO
@@ -52,7 +56,9 @@ def build_monte_carlo(max_workers=8):
     mc_col.delete_many({})
 
     def _run_mc(symbol):
-        symbol_prices = all_prices[all_prices["symbol"] == symbol]
+        symbol_prices = price_frames.get(symbol)
+        if symbol_prices is None:
+            return None
         if len(symbol_prices) < 60:
             return None
         result = run_monte_carlo(symbol_prices["close"])

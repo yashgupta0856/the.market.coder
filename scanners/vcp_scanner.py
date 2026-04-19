@@ -128,7 +128,7 @@ def volume_dryup_gate(
 
 
 # =========================================================
-# NEW: CONTRACTION COUNTING (P0)
+# CONTRACTION COUNTING — vectorised trough detection
 # =========================================================
 
 
@@ -139,6 +139,9 @@ def count_contractions(symbol_df, lookback=120, smoothing=5):
     A contraction is defined as a swing where ATR drops to a trough
     that is lower than the previous trough — meaning each contraction
     is tighter than the last (the hallmark of a true VCP).
+
+    Uses a vectorised rolling-min approach for trough detection instead
+    of the previous O(lookback × half_w) Python loop.
 
     Args:
         symbol_df:  DataFrame with 'atr_14' column, sorted by date.
@@ -158,23 +161,31 @@ def count_contractions(symbol_df, lookback=120, smoothing=5):
     atr_smooth = atr_series.rolling(smoothing, min_periods=1).mean().values
     n = len(atr_smooth)
 
-    # Find local troughs (ATR valleys) using a simple min-of-window approach
     half_w = max(3, smoothing)
-    troughs = []
 
-    for i in range(half_w, n - half_w):
-        window = atr_smooth[max(0, i - half_w):min(n, i + half_w + 1)]
-        if atr_smooth[i] == window.min():
-            troughs.append(atr_smooth[i])
+    if n <= 2 * half_w:
+        return 0, []
+
+    # Vectorised trough detection via centred rolling min
+    atr_pd = pd.Series(atr_smooth)
+    win_size = 2 * half_w + 1
+    rolling_min = atr_pd.rolling(win_size, center=True, min_periods=1).min()
+
+    # A point is a trough if it equals the rolling min in its window
+    # and falls within the valid range [half_w, n - half_w)
+    is_trough = np.zeros(n, dtype=bool)
+    valid = slice(half_w, n - half_w)
+    is_trough[valid] = atr_smooth[valid] == rolling_min.values[valid]
+
+    troughs = atr_smooth[is_trough].tolist()
 
     if len(troughs) < 2:
         return 0, troughs
 
     # Count how many successive troughs are lower than the previous one
-    contractions = 0
-    for j in range(1, len(troughs)):
-        if troughs[j] < troughs[j - 1]:
-            contractions += 1
+    contractions = sum(
+        1 for j in range(1, len(troughs)) if troughs[j] < troughs[j - 1]
+    )
 
     return contractions, troughs
 
@@ -193,7 +204,7 @@ def contraction_count_gate(symbol_df, min_contractions=2):
 
 
 # =========================================================
-# NEW: BREAKOUT DETECTION (P0)
+# BREAKOUT DETECTION (P0)
 # =========================================================
 
 
@@ -253,7 +264,7 @@ def detect_breakout(symbol_df, consolidation_window=20, vol_surge_factor=1.4):
 
 
 # =========================================================
-# NEW: BASE STRUCTURE DETECTION (P1)
+# BASE STRUCTURE DETECTION (P1)
 # =========================================================
 
 def detect_base(symbol_df, min_weeks=3, max_depth_pct=0.35):
@@ -329,6 +340,12 @@ def is_vcp_candidate(df: pd.DataFrame) -> bool:
     if not volume_dryup_gate(df):
         return False
 
+    # Require at least 1 volatility contraction to be a true VCP
+    if "atr_14" in df.columns:
+        count, _ = count_contractions(df)
+        if count < 1:
+            return False
+
     return True
 
 
@@ -368,37 +385,36 @@ def get_vcp_details(df: pd.DataFrame) -> dict:
     except Exception:
         return details
 
-    # Full VCP candidate = passes all 4 original gates
+    # Contraction counting (needed for candidate check)
+    if "atr_14" in df.columns:
+        count, troughs = count_contractions(df)
+        details["contraction_count"] = count
+
+    # Full VCP candidate = passes all 4 original gates + at least 1 contraction
     details["vcp_candidate"] = (
         details["trend_pass"] and
         details["volatility_pass"] and
         details["tightness_pass"] and
-        details["volume_pass"]
+        details["volume_pass"] and
+        details["contraction_count"] >= 1
     )
 
-    # Base structure detection
-    if details["trend_pass"]:
+    # Only compute expensive analysis for actual candidates (VCP Issue 2 fix)
+    if details["vcp_candidate"]:
+        # Base structure detection
         base_info = detect_base(df)
         details["is_valid_base"] = base_info["is_valid_base"]
         details["base_depth_pct"] = base_info["base_depth_pct"]
         details["base_length_days"] = base_info["base_length_days"]
 
-    # Contraction counting (works for any stock in uptrend)
-    if details["trend_pass"] and "atr_14" in df.columns:
-        count, troughs = count_contractions(df)
-        details["contraction_count"] = count
-
-    # Breakout detection (only for VCP candidates)
-    if details["vcp_candidate"]:
+        # Breakout detection
         breakout = detect_breakout(df)
         details["is_breakout"] = breakout["is_breakout"]
         details["pivot_price"] = breakout["pivot_price"]
         details["breakout_volume"] = breakout["breakout_volume"]
 
-    # Quality classification
-    if details["vcp_candidate"]:
+        # Quality classification
         cc = details["contraction_count"]
-        # If the base is too deep (>35%), it limits quality
         if not details["is_valid_base"]:
             details["vcp_quality"] = "emerging"
         elif details["is_breakout"]:
@@ -419,8 +435,15 @@ def get_vcp_details(df: pd.DataFrame) -> dict:
 # =========================================================
 
 
-def scan_universe(indicator_df: pd.DataFrame, max_workers=8) -> pd.DataFrame:
+def scan_universe(indicator_df, max_workers=8) -> pd.DataFrame:
     from concurrent.futures import ThreadPoolExecutor
+
+    if isinstance(indicator_df, pd.DataFrame):
+        groups = list(indicator_df.groupby("symbol"))
+    elif isinstance(indicator_df, dict):
+        groups = list(indicator_df.items())
+    else:
+        groups = list(indicator_df)
 
     def _process_symbol(args):
         symbol, symbol_df = args
@@ -452,8 +475,6 @@ def scan_universe(indicator_df: pd.DataFrame, max_workers=8) -> pd.DataFrame:
             "base_length_days": details.get("base_length_days", 0),
             "vcp_quality": details.get("vcp_quality", "none")
         }
-
-    groups = list(indicator_df.groupby("symbol"))
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         results = list(executor.map(_process_symbol, groups))

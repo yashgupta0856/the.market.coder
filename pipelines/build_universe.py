@@ -74,21 +74,25 @@ def ensure_ohlcv_index():
 def ensure_all_indexes():
     """Create indexes on all frequently queried collections."""
     indexes = {
-        "final_stock_scores": [("rank", 1)],
-        "vcp_candidates": [("vcp_candidate", 1)],
-        "sniper_candidates": [("sniper_candidate", 1)],
-        "sniper_ranked": [("rank", 1)],
-        "users": [("email", 1)],
-        "monte_carlo": [("symbol", 1)],
-        "market_news": [("slug", 1)],
-        "equity_indicators": [("date", -1)],
-        "sector_regime": [("sector_index", 1)],
-        "stock_sector_mapping": [("symbol", 1)],
+        "final_stock_scores": [[("rank", 1)]],
+        "vcp_candidates": [[("vcp_candidate", 1)]],
+        "sniper_candidates": [[("sniper_candidate", 1)]],
+        "sniper_ranked": [[("rank", 1)]],
+        "users": [[("email", 1)]],
+        "monte_carlo": [[("symbol", 1)]],
+        "market_news": [[("slug", 1)]],
+        "equity_indicators": [
+            [("date", -1)],
+            [("symbol", 1), ("date", -1)],
+        ],
+        "sector_regime": [[("sector_index", 1)]],
+        "stock_sector_mapping": [[("symbol", 1)]],
     }
 
-    for collection_name, index_keys in indexes.items():
+    for collection_name, index_specs in indexes.items():
         col = get_collection(collection_name)
-        col.create_index(index_keys, background=True)
+        for index_keys in index_specs:
+            col.create_index(index_keys, background=True)
 
     print(f"Indexes ensured on {len(indexes)} collections.")
 

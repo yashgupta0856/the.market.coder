@@ -13,8 +13,6 @@ from web.services.stock_service import (
 )
 from web.services.explainability_service import get_rank1_stock_explanation
 from web.services.sector_rotation_service import get_top_rotating_sectors
-from web.services.monte_carlo_service import get_monte_carlo_for_symbol
-from web.services.sniper_service import get_sniper_stocks,get_ranked_sniper_stocks
 
 from fastapi.responses import RedirectResponse
 from web.services.access_control import user_has_active_access
@@ -44,7 +42,7 @@ def dashboard(request: Request):
         return RedirectResponse("/renew", status_code=302)
 
     # Run all independent service calls in parallel
-    with ThreadPoolExecutor(max_workers=6) as pool:
+    with ThreadPoolExecutor(max_workers=7) as pool:
         f_stats = pool.submit(get_system_stats)
         f_sectors = pool.submit(get_top_sectors_by_regime)
         f_ranked = pool.submit(get_ranked_vcp_stocks, 100)
@@ -52,8 +50,6 @@ def dashboard(request: Request):
         f_vcp_counts = pool.submit(get_sector_wise_vcp_counts, 10)
         f_remaining = pool.submit(get_remaining_vcp_symbols)
         f_rotating = pool.submit(get_top_rotating_sectors, 10)
-        f_sniper = pool.submit(get_sniper_stocks, 2000)
-        f_sniper_ranked = pool.submit(get_ranked_sniper_stocks, 2000)
 
     system_stats = f_stats.result()
     sector_cards = f_sectors.result()
@@ -62,13 +58,6 @@ def dashboard(request: Request):
     sector_vcp_counts = f_vcp_counts.result()
     remaining_vcp_stocks = f_remaining.result()
     rotating_sectors = f_rotating.result()
-    sniper_stocks = f_sniper.result()
-    sniper_ranked = f_sniper_ranked.result()
-
-    # MC depends on rank1 result, so it runs after
-    mc_data = None
-    if rank1_left:
-        mc_data = get_monte_carlo_for_symbol(rank1_left["symbol"])
 
     return templates.TemplateResponse(
         "dashboard.html",
@@ -82,8 +71,5 @@ def dashboard(request: Request):
             "sector_vcp_counts": sector_vcp_counts,
             "remaining_vcp_stocks": remaining_vcp_stocks,
             "rotating_sectors": rotating_sectors,
-            "mc_data": mc_data,   
-            "sniper_stocks":sniper_stocks,
-            "sniper_ranked":sniper_ranked
         }
     )

@@ -39,23 +39,35 @@ def load_benchmark_indicators():
     return df
 
 
+def load_latest_stock_sector_fused(fused_df=None):
+    df = fused_df if fused_df is not None else load_stock_sector_fused()
+
+    required = {"symbol", "date"}
+    if not required.issubset(df.columns):
+        raise ValueError("Missing required columns for latest stock snapshot")
+
+    return (
+        df.sort_values("date")
+        .groupby("symbol", as_index=False)
+        .tail(1)
+        .copy()
+    )
+
+
 # =====================================================
 # SECTOR BREADTH
 # =====================================================
 
-def compute_sector_breadth(window_col="roc_63", fused_df=None):
-
-    df = fused_df if fused_df is not None else load_stock_sector_fused()
+def compute_sector_breadth(window_col="roc_63", fused_df=None, latest_df=None):
+    latest = (
+        latest_df
+        if latest_df is not None
+        else load_latest_stock_sector_fused(fused_df=fused_df)
+    )
 
     required = {"symbol", "sector_index", window_col}
-    if not required.issubset(df.columns):
+    if not required.issubset(latest.columns):
         raise ValueError("Missing required columns for sector breadth")
-
-    latest = (
-        df.sort_values("date")
-          .groupby("symbol", as_index=False)
-          .tail(1)
-    )
 
     latest["positive"] = latest[window_col] > 0
 
@@ -70,52 +82,50 @@ def compute_sector_breadth(window_col="roc_63", fused_df=None):
 # CAPITAL WEIGHTED RETURN (FIXED)
 # =====================================================
 
-def compute_sector_capital_weighted_return(window_col="roc_63", fused_df=None):
-
-    df = fused_df if fused_df is not None else load_stock_sector_fused()
+def compute_sector_capital_weighted_return(window_col="roc_63", fused_df=None, latest_df=None):
+    latest = (
+        latest_df
+        if latest_df is not None
+        else load_latest_stock_sector_fused(fused_df=fused_df)
+    )
 
     required = {"symbol", "sector_index", "close", "volume", window_col}
-    if not required.issubset(df.columns):
+    if not required.issubset(latest.columns):
         raise ValueError("Missing required columns for capital weighted return")
-
-    latest = (
-        df.sort_values("date")
-          .groupby("symbol", as_index=False)
-          .tail(1)
-    )
 
     # Proxy capital weight (price * volume)
     latest["capital_weight"] = latest["close"] * latest["volume"]
+    latest["weighted_return"] = latest[window_col] * latest["capital_weight"]
 
-    grouped = latest.groupby("sector_index")
-
-    weighted_return = (
-        grouped.apply(
-            lambda x: (
-                (x[window_col] * x["capital_weight"]).sum()
-                / x["capital_weight"].sum()
-                if x["capital_weight"].sum() != 0 else 0
-            )
+    grouped = (
+        latest.groupby("sector_index", as_index=False)
+        .agg(
+            weighted_return_sum=("weighted_return", "sum"),
+            capital_weight_sum=("capital_weight", "sum"),
         )
-        .reset_index(name="capital_weighted_return")
     )
 
-    return weighted_return
+    grouped["capital_weighted_return"] = 0.0
+    nonzero = grouped["capital_weight_sum"] != 0
+    grouped.loc[nonzero, "capital_weighted_return"] = (
+        grouped.loc[nonzero, "weighted_return_sum"]
+        / grouped.loc[nonzero, "capital_weight_sum"]
+    )
+
+    return grouped[["sector_index", "capital_weighted_return"]]
 
 
 # =====================================================
 # RELATIVE STRENGTH VS MARKET
 # =====================================================
 
-def compute_sector_relative_strength(window_col="roc_63", fused_df=None, bench_df=None):
+def compute_sector_relative_strength(window_col="roc_63", fused_df=None, bench_df=None, latest_df=None):
 
-    stock_df = fused_df if fused_df is not None else load_stock_sector_fused()
     bench_df = bench_df if bench_df is not None else load_benchmark_indicators()
-
     latest_stock = (
-        stock_df.sort_values("date")
-        .groupby("symbol", as_index=False)
-        .tail(1)
+        latest_df
+        if latest_df is not None
+        else load_latest_stock_sector_fused(fused_df=fused_df)
     )
 
     sector_return = (
@@ -163,10 +173,15 @@ def build_sector_rotation(window_col="roc_63"):
     # Load shared data once (was loaded 3× before)
     fused_df = load_stock_sector_fused()
     bench_df = load_benchmark_indicators()
+    latest_stock = load_latest_stock_sector_fused(fused_df=fused_df)
 
-    breadth = compute_sector_breadth(window_col, fused_df=fused_df)
-    cap_ret = compute_sector_capital_weighted_return(window_col, fused_df=fused_df)
-    rel     = compute_sector_relative_strength(window_col, fused_df=fused_df, bench_df=bench_df)
+    breadth = compute_sector_breadth(window_col, latest_df=latest_stock)
+    cap_ret = compute_sector_capital_weighted_return(window_col, latest_df=latest_stock)
+    rel = compute_sector_relative_strength(
+        window_col,
+        bench_df=bench_df,
+        latest_df=latest_stock,
+    )
 
     df = (
         breadth
