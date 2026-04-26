@@ -8,7 +8,7 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-def send_community_alert(symbol: str, entry: str, stop_loss: str, target: str, commentary: str, image_url: str):
+def send_community_alert(symbol: str, entry: str, commentary: str, image_url: str):
     """
     Sends a formatted message to the Telegram channel when a new community post is made.
     """
@@ -22,17 +22,13 @@ def send_community_alert(symbol: str, entry: str, stop_loss: str, target: str, c
         # Assume it's a public channel handle if no prefix
         chat_id = f"@{chat_id}"
 
-    caption = f"🚀 <b>NEW STOCK ALERT: {symbol}</b>\n\n"
+    caption = f"📊 <b>NEW RESEARCH NOTE: {symbol}</b>\n\n"
     
     if entry:
         caption += f"🟢 <b>Entry:</b> {entry}\n"
-    if target:
-        caption += f"🎯 <b>Target:</b> {target}\n"
-    if stop_loss:
-        caption += f"🛑 <b>Stop Loss:</b> {stop_loss}\n"
         
     if commentary:
-        caption += f"\n📝 <b>Commentary:</b>\n{commentary}\n"
+        caption += f"\n📝 <b>Notes:</b>\n{commentary}\n"
 
     try:
         if image_url:

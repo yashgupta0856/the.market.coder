@@ -57,8 +57,6 @@ async def create_community_post(
     background_tasks: BackgroundTasks,
     symbol: str = Form(...),
     entry: str = Form(None),
-    stop_loss: str = Form(None),
-    target: str = Form(None),
     commentary: str = Form(None),
     image: UploadFile = File(None),
 ):
@@ -82,8 +80,6 @@ async def create_community_post(
     col.insert_one({
         "symbol": symbol,
         "entry": entry,
-        "stop_loss": stop_loss,
-        "target": target,
         "commentary": commentary,
         "image_path": image_url,
         "author": "the.market.coder",
@@ -95,8 +91,6 @@ async def create_community_post(
         send_community_alert,
         symbol=symbol,
         entry=entry,
-        stop_loss=stop_loss,
-        target=target,
         commentary=commentary,
         image_url=image_url
     )

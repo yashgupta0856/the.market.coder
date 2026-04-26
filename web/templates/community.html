@@ -2,9 +2,9 @@
 {% block content %}
 
 <section class="fade-in" style="margin-bottom:40px;">
-  <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px;">Community Charts</h1>
+  <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px;">Community Research</h1>
   <p class="subtitle" style="font-size: 15px;">
-    Educational VCP observations shared by the the.market.coder team
+    Research notes and chart observations by the.market.coder team
   </p>
 </section>
 
@@ -12,7 +12,7 @@
   {% for doc in posts %}
   <div class="panel community-card" style="padding: 16px;">
     
-    <div class="status-tag" style="background:var(--primary); color:#fff; display:inline-block; margin-bottom:12px;">TRADE IDEA</div>
+    <div class="status-tag" style="background:var(--primary); color:#fff; display:inline-block; margin-bottom:12px;">RESEARCH NOTE</div>
 
     {% if doc.image_path %}
     <img src="{{ doc.image_path }}" alt="Stock Chart" style="width: 100%; border-radius: 8px; margin-bottom: 12px;">
@@ -23,8 +23,6 @@
       
       <div style="display:flex; gap:12px; font-size:13px; font-weight:600; margin-bottom:12px;">
         {% if doc.entry %}<span style="color:var(--primary);">Entry: {{ doc.entry }}</span>{% endif %}
-        {% if doc.target %}<span style="color:#6ee7b7;">Target: {{ doc.target }}</span>{% endif %}
-        {% if doc.stop_loss %}<span style="color:#fca5a5;">SL: {{ doc.stop_loss }}</span>{% endif %}
       </div>
 
       <p style="margin:0 0 16px 0; font-size:15px; color:#cbd5e1; line-height:1.6;">{{ doc.commentary }}</p>
@@ -35,7 +33,7 @@
     </div>
   </div>
   {% else %}
-  <p style="color:var(--muted); font-size:15px;">No community setups posted yet.</p>
+  <p style="color:var(--muted); font-size:15px;">No research notes posted yet.</p>
   {% endfor %}
 </div>
 
