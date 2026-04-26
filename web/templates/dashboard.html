@@ -103,7 +103,7 @@
           <span>{{ "%.2f"|format(value) if value else '—' }}</span>
         </div>
         {% endfor %}
-        <div class="hero-metric">
+        <!-- <div class="hero-metric">
           <span>Fund. Grade</span>
           <span class="badge
             {% if rank1_left.fundamental_grade == 'A' %} badge-success
@@ -111,7 +111,7 @@
             {% elif rank1_left.fundamental_grade == 'C' %} badge-warning
             {% else %} badge-secondary
             {% endif %}">{{ rank1_left.fundamental_grade or '—' }}</span>
-        </div>
+        </div> -->
       </div>
 
       <div class="hero-panel">
@@ -258,6 +258,9 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block modals %}
 <!-- ================= MONTE CARLO MODAL ================= -->
 <div id="mc-modal" class="mc-modal hidden">
   <div class="mc-content">
@@ -497,6 +500,9 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
 <!-- ================= FULL JS ================= -->
 <script>
   /* ---------- MODE TOGGLE ---------- */

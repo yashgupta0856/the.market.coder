@@ -93,8 +93,8 @@ def is_sniper_candidate(symbol_df: pd.DataFrame) -> bool:
         return False
 
     # ── PRICE FILTER ──────────────────────────────────────────────────
-    if not (25 <= latest_close <= 500):
-        return False
+    # if not (25 <= latest_close <= 500):
+    #     return False
 
     # ── WEEKLY VOLUME FILTER ──────────────────────────────────────────
     weekly_volume = (
