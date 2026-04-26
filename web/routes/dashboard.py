@@ -14,6 +14,7 @@ from web.services.stock_service import (
 from web.services.explainability_service import get_rank1_stock_explanation
 from web.services.sector_rotation_service import get_top_rotating_sectors
 
+
 from fastapi.responses import RedirectResponse
 from web.services.access_control import user_has_active_access
 

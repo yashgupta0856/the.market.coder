@@ -3,8 +3,8 @@ Master pipeline runner.
 Runs all phases in correct order with parallel execution where safe.
 
 Dependency graph:
-  Phase 1 → Phase 2 → [Phase 3 + Phase 4 + Phase 6]  → Phase 5 → Monte Carlo
-                         (VCP)    (Sector)   (Sniper)
+  Phase 1 → Phase 2 → [Phase 3 + Phase 4 + Phase 6] → Phase 5 → Phase 5.5 → Monte Carlo
+              (Indicators)  (VCP)   (Sector)  (Sniper)  (Scoring)  (Fundamentals)
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -45,6 +45,11 @@ def main():
     print("Running Phase 5 — Stock Scoring & Ranking")
     from pipelines.build_fusion import run_phase5_pipeline
     run_phase5_pipeline()
+
+    # ── Phase 5.5 — VCP Fundamentals (only for ranked stocks) ────────────
+    print("Running Phase 5.5 — VCP Fundamentals")
+    from pipelines.build_vcp_fundamentals import run_phase5_5
+    run_phase5_5()
 
     # ── Monte Carlo (depends on 5) ───────────────────────────────────────
     print("Running Monte Carlo Risk Simulation")

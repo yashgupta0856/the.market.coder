@@ -53,6 +53,6 @@ def normalize_and_score(rs_df):
         0.2 * rs_df["trend_confirm"]
     )
 
-    rs_df["rs_rank"] = rs_df["rs_score"].rank(ascending=False)
+    rs_df["rs_rank"] = rs_df["rs_score"].rank(ascending=False, method='first')
 
     return rs_df.sort_values("rs_rank")

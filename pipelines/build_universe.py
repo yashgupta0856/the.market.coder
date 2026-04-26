@@ -85,6 +85,10 @@ def ensure_all_indexes():
             [("date", -1)],
             [("symbol", 1), ("date", -1)],
         ],
+        "equity_fundamentals": [
+            [("symbol", 1)],
+            [("fundamental_score", -1)],
+        ],
         "sector_regime": [[("sector_index", 1)]],
         "stock_sector_mapping": [[("symbol", 1)]],
     }

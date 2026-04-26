@@ -23,6 +23,8 @@ def get_rank1_stock_explanation():
             "sector_index": 1,
             "sector_regime": 1,
             "vcp_candidate": 1,
+            "fundamental_factor": 1,
+            "fundamental_grade": 1,
         }
     )
 
@@ -36,7 +38,8 @@ def get_rank1_stock_explanation():
         "trend_strength": top.get("trend_strength"),
         "momentum": top.get("momentum"),
         "volatility_tightness": top.get("volatility_tightness"),
-        "structure_bonus": bool(top.get("structure_bonus")),
+        "fundamental_factor": top.get("fundamental_factor"),
+        "fundamental_grade": top.get("fundamental_grade"),
         "sector_index": top.get("sector_index"),
         "sector_regime": top.get("sector_regime"),
     }

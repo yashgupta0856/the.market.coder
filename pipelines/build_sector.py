@@ -40,6 +40,9 @@ def run_phase4():
 
     sector_df = pd.concat(frames, ignore_index=True)
 
+    # Drop non-trading-day rows (yfinance returns date with NaN close on weekends/holidays)
+    sector_df = sector_df.dropna(subset=["close"])
+
     df_to_mongo(sector_df, "sector_indicators")
 
     #  Sector Strength 
@@ -52,6 +55,7 @@ def run_phase4():
     )
 
     benchmark_df["date"] = pd.to_datetime(benchmark_df["date"])
+    benchmark_df = benchmark_df.dropna(subset=["close"])
     benchmark_latest = benchmark_df[
         benchmark_df["date"] == latest_date
     ]

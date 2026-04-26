@@ -64,6 +64,8 @@
   </div>
 </section>
 
+
+
 <!-- ================= TOGGLE ================= -->
 <div class="scanner-toggle fade-in" style="animation-delay: 0.1s; margin-bottom: 40px;">
   <button id="btn-vcp" class="scanner-btn active" onclick="showVCP()">
@@ -93,13 +95,23 @@
         {% for label, value in [
         ("Trend Strength", rank1_left.trend_strength),
         ("Momentum", rank1_left.momentum),
-        ("Volatility Tightness", rank1_left.volatility_tightness)
+        ("Volatility Tightness", rank1_left.volatility_tightness),
+        ("Fundamental Factor", rank1_left.fundamental_factor)
         ] %}
         <div class="hero-metric">
           <span>{{ label }}</span>
-          <span>{{ "%.2f"|format(value) }}</span>
+          <span>{{ "%.2f"|format(value) if value else '—' }}</span>
         </div>
         {% endfor %}
+        <div class="hero-metric">
+          <span>Fund. Grade</span>
+          <span class="badge
+            {% if rank1_left.fundamental_grade == 'A' %} badge-success
+            {% elif rank1_left.fundamental_grade == 'B' %} badge-primary
+            {% elif rank1_left.fundamental_grade == 'C' %} badge-warning
+            {% else %} badge-secondary
+            {% endif %}">{{ rank1_left.fundamental_grade or '—' }}</span>
+        </div>
       </div>
 
       <div class="hero-panel">
@@ -132,8 +144,10 @@
             <th>Sector</th>
             <th>CMP</th>
             <th>Quality</th>
+            <th>Fund.</th>
             <th>Contractions</th>
             <th>Risk</th>
+            <th>Fundamentals</th>
             <th>Chart</th>
           </tr>
         </thead>
@@ -157,9 +171,22 @@
                 {{ s.vcp_quality|upper if s.vcp_quality else 'NONE' }}
               </span>
             </td>
+            <td>
+              <span class="badge
+                {% if s.fundamental_grade == 'A' %} badge-success
+                {% elif s.fundamental_grade == 'B' %} badge-primary
+                {% elif s.fundamental_grade == 'C' %} badge-warning
+                {% else %} badge-secondary
+                {% endif %}">
+                {{ s.fundamental_grade or '—' }}
+              </span>
+            </td>
             <td>{{ s.contraction_count if s.contraction_count else 0 }}</td>
             <td>
               <button class="risk-btn btn-primary" onclick="openMonteCarlo('{{ s.symbol }}')">Risk</button>
+            </td>
+            <td>
+              <button class="risk-btn btn-fund" onclick="openFundamentals('{{ s.symbol }}')">Fund.</button>
             </td>
             <td>
               <button class="risk-btn btn-secondary" onclick="openChart('{{ s.symbol }}')">Chart</button>
@@ -261,6 +288,197 @@
     </div>
 
     <canvas id="mcChart" height="160"></canvas>
+  </div>
+</div>
+
+<!-- ================= FUNDAMENTALS MODAL ================= -->
+<!-- ================= FUNDAMENTALS MODAL ================= -->
+<div id="fund-modal" class="mc-modal hidden">
+  <div class="mc-content fund-modal-content">
+
+    <!-- Hero Header -->
+    <div class="fund-hero">
+      <div class="fund-hero-left">
+        <div class="fund-hero-tag">Fundamental Analysis</div>
+        <div id="fund-symbol" class="fund-hero-symbol"></div>
+        <div id="fund-company" class="fund-hero-company"></div>
+        <div id="fund-industry" class="fund-hero-industry"></div>
+      </div>
+      <div class="fund-hero-right">
+        <div class="fund-score-ring">
+          <svg viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="34" class="fund-ring-bg"/>
+            <circle cx="40" cy="40" r="34" class="fund-ring-fg" id="fund-ring-circle"
+              stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+          </svg>
+          <div class="fund-ring-text">
+            <span id="fund-score-num" class="fund-ring-score">—</span>
+            <span class="fund-ring-label">/ 100</span>
+          </div>
+        </div>
+        <span id="fund-grade-badge" class="badge" style="font-size:14px; padding:5px 14px; margin-top:8px;"></span>
+      </div>
+      <span class="fund-close-btn" onclick="closeFundamentals()">×</span>
+    </div>
+
+    <!-- Analyst Recommendation Bar -->
+    <div class="fund-reco-bar" id="fund-reco-bar" style="display:none;">
+      <div class="fund-reco-left">
+        <span class="fund-reco-pill" id="fund-reco-pill">—</span>
+        <span class="fund-reco-analysts" id="fund-reco-analysts"></span>
+      </div>
+      <div class="fund-reco-right">
+        <span class="fund-reco-target-label">Target Price</span>
+        <span class="fund-reco-target" id="fund-reco-target">—</span>
+      </div>
+    </div>
+
+    <!-- SECTION 1: Valuation -->
+    <div class="fund-section">
+      <div class="fund-section-header">
+        <span class="fund-section-icon">📊</span>
+        <span class="fund-section-title">Valuation</span>
+      </div>
+      <div class="fund-grid">
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Market Cap</div>
+          <div class="fund-metric-value" id="fund-mkt-cap">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Enterprise Value</div>
+          <div class="fund-metric-value" id="fund-ev">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Trailing P/E</div>
+          <div class="fund-metric-value" id="fund-trailing-pe">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Forward P/E</div>
+          <div class="fund-metric-value" id="fund-forward-pe">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">PEG Ratio</div>
+          <div class="fund-metric-value" id="fund-peg">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Price / Book</div>
+          <div class="fund-metric-value" id="fund-pb">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Price / Sales</div>
+          <div class="fund-metric-value" id="fund-ps">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">EV / EBITDA</div>
+          <div class="fund-metric-value" id="fund-ev-ebitda">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">EV / Revenue</div>
+          <div class="fund-metric-value" id="fund-ev-rev">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Profitability & Growth -->
+    <div class="fund-section">
+      <div class="fund-section-header">
+        <span class="fund-section-icon">📈</span>
+        <span class="fund-section-title">Profitability & Growth</span>
+      </div>
+      <div class="fund-grid">
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">ROE</div>
+          <div class="fund-metric-value fund-colored" id="fund-roe">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">ROA</div>
+          <div class="fund-metric-value fund-colored" id="fund-roa">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Gross Margin</div>
+          <div class="fund-metric-value fund-colored" id="fund-gross-margin">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Operating Margin</div>
+          <div class="fund-metric-value fund-colored" id="fund-op-margin">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Profit Margin</div>
+          <div class="fund-metric-value fund-colored" id="fund-profit-margin">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">EBITDA Margin</div>
+          <div class="fund-metric-value fund-colored" id="fund-ebitda-margin">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Revenue Growth</div>
+          <div class="fund-metric-value fund-colored" id="fund-rev-growth">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Earnings Growth</div>
+          <div class="fund-metric-value fund-colored" id="fund-earn-growth">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Trailing EPS</div>
+          <div class="fund-metric-value" id="fund-trailing-eps">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Forward EPS</div>
+          <div class="fund-metric-value" id="fund-forward-eps">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Financial Health -->
+    <div class="fund-section">
+      <div class="fund-section-header">
+        <span class="fund-section-icon">🏦</span>
+        <span class="fund-section-title">Financial Health</span>
+      </div>
+      <div class="fund-grid">
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Total Revenue</div>
+          <div class="fund-metric-value" id="fund-revenue">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">EBITDA</div>
+          <div class="fund-metric-value" id="fund-ebitda">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Net Income</div>
+          <div class="fund-metric-value fund-colored" id="fund-net-income">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Free Cash Flow</div>
+          <div class="fund-metric-value fund-colored" id="fund-fcf">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Total Cash</div>
+          <div class="fund-metric-value" id="fund-cash">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Total Debt</div>
+          <div class="fund-metric-value" id="fund-debt">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Debt / Equity</div>
+          <div class="fund-metric-value" id="fund-de">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Current Ratio</div>
+          <div class="fund-metric-value" id="fund-current-ratio">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Beta</div>
+          <div class="fund-metric-value" id="fund-beta">—</div>
+        </div>
+        <div class="fund-metric-card">
+          <div class="fund-metric-label">Dividend Yield</div>
+          <div class="fund-metric-value" id="fund-div-yield">—</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -441,6 +659,146 @@
   }
   function closeMonteCarlo() {
     document.getElementById("mc-modal").classList.add("hidden");
+  }
+
+  /* ---------- FUNDAMENTALS ---------- */
+  function fmtNum(val, decimals = 1) {
+    if (val == null || val === "" || (typeof val === 'number' && isNaN(val))) return "—";
+    return Number(val).toFixed(decimals);
+  }
+  function fmtPct(val) {
+    if (val == null || val === "" || (typeof val === 'number' && isNaN(val))) return null;
+    return (Number(val) * 100).toFixed(1) + "%";
+  }
+  function fmtCrore(val) {
+    if (val == null) return "—";
+    const abs = Math.abs(val);
+    const sign = val < 0 ? "-" : "";
+    if (abs >= 10000000000000) return sign + (abs / 10000000000000).toFixed(1) + "L Cr";
+    if (abs >= 10000000) return sign + Math.round(abs / 10000000).toLocaleString() + " Cr";
+    if (abs >= 100000) return sign + (abs / 100000).toFixed(1) + " L";
+    return sign + abs.toLocaleString();
+  }
+
+  function setColoredValue(el, rawVal, formatted) {
+    el.innerText = formatted || "—";
+    el.classList.remove("val-positive", "val-negative");
+    if (rawVal != null && typeof rawVal === 'number' && !isNaN(rawVal)) {
+      el.classList.add(rawVal >= 0 ? "val-positive" : "val-negative");
+    }
+  }
+
+  async function openFundamentals(symbol) {
+    document.getElementById("fund-modal").classList.remove("hidden");
+    document.getElementById("fund-symbol").innerText = symbol;
+    document.getElementById("fund-company").innerText = "Loading...";
+    document.getElementById("fund-industry").innerText = "";
+    document.getElementById("fund-reco-bar").style.display = "none";
+
+    // Reset
+    document.getElementById("fund-grade-badge").innerText = "...";
+    document.getElementById("fund-grade-badge").className = "badge badge-secondary";
+    document.getElementById("fund-score-num").innerText = "—";
+    document.getElementById("fund-ring-circle").style.strokeDashoffset = "213.6";
+    document.querySelectorAll(".fund-metric-value").forEach(el => {
+      el.innerText = "—";
+      el.classList.remove("val-positive", "val-negative");
+    });
+
+    try {
+      const res = await fetch(`/api/fundamentals/${symbol}`);
+      const data = await res.json();
+      if (!data || data.status !== "success") return;
+
+      const m = data.metrics;
+
+      // Company info
+      document.getElementById("fund-company").innerText = m.company_name || "";
+      document.getElementById("fund-industry").innerText =
+        [m.sector, m.industry].filter(Boolean).join(" · ");
+
+      // Grade badge
+      const gradeBadge = document.getElementById("fund-grade-badge");
+      gradeBadge.innerText = m.fundamental_grade || "—";
+      gradeBadge.className = "badge " + ({
+        A: "badge-success", B: "badge-primary",
+        C: "badge-warning", D: "badge-secondary", F: "badge-secondary"
+      }[m.fundamental_grade] || "badge-secondary");
+
+      // Score ring animation
+      const score = m.fundamental_score != null ? m.fundamental_score : 0;
+      document.getElementById("fund-score-num").innerText = Math.round(score);
+      const circumference = 213.6;
+      const offset = circumference - (score / 100) * circumference;
+      const ring = document.getElementById("fund-ring-circle");
+      ring.style.transition = "stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1)";
+      setTimeout(() => { ring.style.strokeDashoffset = offset; }, 50);
+
+      // Analyst recommendation bar
+      if (m.recommendation || m.analyst_target_mean != null) {
+        document.getElementById("fund-reco-bar").style.display = "flex";
+        const pill = document.getElementById("fund-reco-pill");
+        const reco = (m.recommendation || "").replace(/_/g, " ").toUpperCase();
+        pill.innerText = reco || "—";
+        pill.className = "fund-reco-pill " + ({
+          "STRONG BUY": "reco-strong-buy", "BUY": "reco-buy",
+          "HOLD": "reco-hold", "SELL": "reco-sell",
+          "STRONG SELL": "reco-sell", "UNDERPERFORM": "reco-sell"
+        }[reco] || "reco-hold");
+
+        document.getElementById("fund-reco-analysts").innerText =
+          m.analyst_count ? m.analyst_count + " analysts" : "";
+
+        if (m.analyst_target_mean != null) {
+          const low = m.analyst_target_low ? "₹" + Math.round(m.analyst_target_low) : "?";
+          const high = m.analyst_target_high ? "₹" + Math.round(m.analyst_target_high) : "?";
+          document.getElementById("fund-reco-target").innerText =
+            "₹" + Math.round(m.analyst_target_mean) + "  (" + low + " – " + high + ")";
+        }
+      }
+
+      // Section 1: Valuation
+      document.getElementById("fund-mkt-cap").innerText = fmtCrore(m.market_cap);
+      document.getElementById("fund-ev").innerText = fmtCrore(m.enterprise_value);
+      document.getElementById("fund-trailing-pe").innerText = fmtNum(m.trailing_pe);
+      document.getElementById("fund-forward-pe").innerText = fmtNum(m.forward_pe);
+      document.getElementById("fund-peg").innerText = fmtNum(m.peg_ratio, 2);
+      document.getElementById("fund-pb").innerText = fmtNum(m.price_to_book, 2);
+      document.getElementById("fund-ps").innerText = fmtNum(m.price_to_sales, 2);
+      document.getElementById("fund-ev-ebitda").innerText = fmtNum(m.ev_to_ebitda);
+      document.getElementById("fund-ev-rev").innerText = fmtNum(m.ev_to_revenue, 2);
+
+      // Section 2: Profitability & Growth (color-coded)
+      setColoredValue(document.getElementById("fund-roe"), m.roe, fmtPct(m.roe));
+      setColoredValue(document.getElementById("fund-roa"), m.roa, fmtPct(m.roa));
+      setColoredValue(document.getElementById("fund-gross-margin"), m.gross_margin, fmtPct(m.gross_margin));
+      setColoredValue(document.getElementById("fund-op-margin"), m.operating_margin, fmtPct(m.operating_margin));
+      setColoredValue(document.getElementById("fund-profit-margin"), m.profit_margin, fmtPct(m.profit_margin));
+      setColoredValue(document.getElementById("fund-ebitda-margin"), m.ebitda_margin, fmtPct(m.ebitda_margin));
+      setColoredValue(document.getElementById("fund-rev-growth"), m.revenue_growth, fmtPct(m.revenue_growth));
+      setColoredValue(document.getElementById("fund-earn-growth"), m.earnings_growth, fmtPct(m.earnings_growth));
+      document.getElementById("fund-trailing-eps").innerText = fmtNum(m.trailing_eps, 2);
+      document.getElementById("fund-forward-eps").innerText = fmtNum(m.forward_eps, 2);
+
+      // Section 3: Financial Health
+      document.getElementById("fund-revenue").innerText = fmtCrore(m.total_revenue);
+      document.getElementById("fund-ebitda").innerText = fmtCrore(m.ebitda);
+      setColoredValue(document.getElementById("fund-net-income"), m.net_income, fmtCrore(m.net_income));
+      setColoredValue(document.getElementById("fund-fcf"), m.free_cashflow, fmtCrore(m.free_cashflow));
+      document.getElementById("fund-cash").innerText = fmtCrore(m.total_cash);
+      document.getElementById("fund-debt").innerText = fmtCrore(m.total_debt);
+      document.getElementById("fund-de").innerText = fmtNum(m.debt_to_equity);
+      document.getElementById("fund-current-ratio").innerText = fmtNum(m.current_ratio, 2);
+      document.getElementById("fund-beta").innerText = fmtNum(m.beta, 2);
+      document.getElementById("fund-div-yield").innerText = fmtPct(m.dividend_yield) || "—";
+
+    } catch (e) {
+      console.error("Failed to load fundamentals", e);
+    }
+  }
+
+  function closeFundamentals() {
+    document.getElementById("fund-modal").classList.add("hidden");
   }
 
   /* ---------- PRICE CHART ---------- */

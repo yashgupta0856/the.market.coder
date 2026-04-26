@@ -22,15 +22,20 @@ def compute_stock_score(df: pd.DataFrame) -> pd.DataFrame:
 
     scored["volatility_tightness"] = 1 - (scored["atr_14"] / scored["close"])
 
-    # VCP-only universe → constant bonus
-    scored["structure_bonus"] = 1.0
+    # Fundamental factor: normalise 0–100 score to 0–1, default 0.5 (neutral)
+    if "fundamental_score" in scored.columns:
+        scored["fundamental_factor"] = (
+            scored["fundamental_score"].fillna(50) / 100
+        ).clip(0, 1)
+    else:
+        scored["fundamental_factor"] = 0.5
 
     # Composite score
     scored["stock_score"] = (
         0.35 * scored["trend_strength"] +
         0.35 * scored["momentum"] +
         0.20 * scored["volatility_tightness"] +
-        0.10 * scored["structure_bonus"]
+        0.10 * scored["fundamental_factor"]
     )
 
     # Ranking

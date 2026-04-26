@@ -70,6 +70,7 @@ def run_phase5_1() -> pd.DataFrame:
         how="left"
     )
 
+
     print("Storing stock_sector_fused in MongoDB...")
     df_to_mongo(stocks_latest, "stock_sector_fused")
 

@@ -15,7 +15,9 @@ def get_ranked_vcp_stocks(limit=20):
                 "vcp_quality": 1,
                 "contraction_count": 1,
                 "granular_sector": 1,
-                "granular_subsector": 1
+                "granular_subsector": 1,
+                "fundamental_grade": 1,
+                "fundamental_score": 1
             }
         )
         .sort("rank", 1)

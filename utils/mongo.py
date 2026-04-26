@@ -49,6 +49,7 @@ if MONGODB_URI_SECONDARY:
 # dashboard its own read pool.
 SECONDARY_COLLECTIONS = {
     "equity_indicators", "benchmark_indicators",
+    "equity_fundamentals",
     "vcp_candidates", "sniper_candidates", "sniper_ranked",
     "sector_indicators", "sector_strength", "sector_regime",
     "stock_sector_fused", "vcp_sector_filtered", "sector_rotation",

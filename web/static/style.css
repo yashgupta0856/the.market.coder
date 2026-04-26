@@ -495,6 +495,271 @@ body {
 .mc-header span:last-child { cursor: pointer; color: var(--muted); }
 .mc-header span:last-child:hover { color: #fff; }
 
+/* ====== FUNDAMENTALS MODAL — PREMIUM ====== */
+.fund-modal-content {
+  max-width: 660px;
+  padding: 0 !important;
+  overflow-y: auto;
+}
+
+/* Hero Header */
+.fund-hero {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 28px 28px 22px;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(59, 130, 246, 0.10));
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.fund-hero-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #0d9488;
+  margin-bottom: 6px;
+}
+
+.fund-hero-symbol {
+  font-size: 26px;
+  font-weight: 900;
+  color: #f1f5f9;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.fund-hero-company {
+  font-size: 13px;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.fund-hero-industry {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.fund-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.fund-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 28px;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: color 0.2s;
+  line-height: 1;
+  z-index: 10;
+  padding: 4px 8px;
+}
+.fund-close-btn:hover { color: #fff; }
+
+/* Score Ring */
+.fund-score-ring {
+  position: relative;
+  width: 76px;
+  height: 76px;
+}
+
+.fund-score-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.fund-ring-bg {
+  fill: none;
+  stroke: rgba(255,255,255,0.06);
+  stroke-width: 5;
+}
+
+.fund-ring-fg {
+  fill: none;
+  stroke: url(#fund-ring-gradient);
+  stroke: #0d9488;
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fund-ring-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  line-height: 1;
+}
+
+.fund-ring-score {
+  font-size: 22px;
+  font-weight: 900;
+  color: #f1f5f9;
+  display: block;
+}
+
+.fund-ring-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: #64748b;
+  display: block;
+  margin-top: 2px;
+}
+
+/* Recommendation Bar */
+.fund-reco-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.fund-reco-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fund-reco-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+.reco-strong-buy { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.reco-buy { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+.reco-hold { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+.reco-sell { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+.fund-reco-analysts {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.fund-reco-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.fund-reco-target-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.fund-reco-target {
+  font-size: 15px;
+  font-weight: 800;
+  color: #e2e8f0;
+  letter-spacing: -0.3px;
+}
+
+/* Sections */
+.fund-section {
+  margin: 0;
+  padding: 20px 28px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.fund-section:last-child {
+  border-bottom: none;
+}
+
+.fund-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.fund-section-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.fund-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+}
+
+/* Metric Grid */
+.fund-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .fund-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.fund-metric-card {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: all 0.2s ease;
+}
+
+.fund-metric-card:hover {
+  border-color: rgba(13, 148, 136, 0.3);
+  background: rgba(13, 148, 136, 0.04);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.fund-metric-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.fund-metric-value {
+  font-size: 15px;
+  font-weight: 800;
+  color: #e2e8f0;
+  letter-spacing: -0.3px;
+}
+
+/* Color-coded values */
+.fund-metric-value.val-positive { color: #34d399; }
+.fund-metric-value.val-negative { color: #f87171; }
+
+/* Fundamentals button (teal accent to distinguish from Risk) */
+.risk-btn.btn-fund {
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+}
+.risk-btn.btn-fund:hover {
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.5);
+  transform: translateY(-1px);
+}
+
 /* FOOTER */
 .app-footer { border-top: 1px solid var(--border); padding: 30px 20px; margin-top: 60px; }
 .footer-content { max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; color: var(--muted); font-size: 14px; }
