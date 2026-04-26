@@ -40,6 +40,20 @@ def fetch_all_news():
     )
 
 
+def fetch_news_paginated(page: int = 1, per_page: int = 9):
+    col = get_collection("market_news")
+    total = col.count_documents({"published": True})
+
+    posts = list(
+        col.find({"published": True}, {"_id": 0})
+        .sort("created_at", -1)
+        .skip((page - 1) * per_page)
+        .limit(per_page)
+    )
+
+    return posts, total
+
+
 def fetch_single_news(slug: str):
     col = get_collection("market_news")
     return col.find_one(

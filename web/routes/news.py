@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Request, Form, UploadFile, File
+from fastapi import APIRouter, Request, Form, UploadFile, File, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from web.services.news_service import (
     create_news_article,
-    fetch_all_news,
+    fetch_news_paginated,
     fetch_single_news
 )
 
@@ -20,13 +20,23 @@ templates = Jinja2Templates(directory="web/templates")
 
 
 @router.get("/news", response_class=HTMLResponse)
-def news_page(request: Request):
+def news_page(request: Request, page: int = Query(1)):
 
-    news = fetch_all_news()
+    per_page = 6
+    news, total = fetch_news_paginated(page, per_page)
+    total_pages = max(1, -(-total // per_page))
+    page = max(1, min(page, total_pages))
 
     return templates.TemplateResponse(
         "news.html",
-        {"request": request, "news": news}
+        {
+            "request": request,
+            "news": news,
+            "page": page,
+            "total_pages": total_pages,
+            "has_prev": page > 1,
+            "has_next": page < total_pages
+        }
     )
 
 

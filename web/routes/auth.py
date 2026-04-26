@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Form, File, UploadFile
+from fastapi import APIRouter, Request, Form, File, UploadFile, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -7,6 +7,8 @@ from utils.auth import hash_password, verify_password
 
 from datetime import datetime, timedelta, timezone
 from utils.cloudinary_uploader import upload_image
+from utils.email import send_password_reset_email
+import uuid
 
 
 router = APIRouter()
@@ -28,6 +30,13 @@ async def signup_user(
     tradingview_id: str = Form(None),
     payment_proof: UploadFile = File(...)
 ):
+    # Password validation
+    if len(password) < 8:
+        return templates.TemplateResponse(
+            "signup.html",
+            {"request": request, "error": "Password must be at least 8 characters"}
+        )
+
     users = get_collection("users")
 
     if users.find_one({"email": email}):
@@ -123,7 +132,7 @@ async def renew_access(
 
     image_url = upload_image(payment_proof.file)
 
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=60)
+    expires_at = datetime.now(timezone.utc) + timedelta(weeks=4)
 
     users = get_collection("users")
     users.update_one(
@@ -140,3 +149,132 @@ async def renew_access(
     })
 
     return RedirectResponse("/dashboard", status_code=302)
+
+
+
+# FORGOT PASSWORD
+
+
+@router.get("/forgot-password")
+def forgot_password_page(request: Request):
+    return templates.TemplateResponse(
+        "forgot_password.html",
+        {"request": request}
+    )
+
+
+@router.post("/forgot-password")
+def forgot_password_submit(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    email: str = Form(...),
+):
+    users = get_collection("users")
+    user = users.find_one({"email": email})
+
+    # Always show success to prevent email enumeration
+    success_msg = "If an account with that email exists, a password reset link has been sent."
+
+    if user:
+        token = str(uuid.uuid4())
+        resets = get_collection("password_resets")
+
+        resets.insert_one({
+            "email": email,
+            "token": token,
+            "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
+            "used": False,
+            "created_at": datetime.now(timezone.utc)
+        })
+
+        # Build reset link using the request's base URL
+        reset_link = f"{request.base_url}reset-password?token={token}"
+
+        background_tasks.add_task(
+            send_password_reset_email,
+            to_email=email,
+            reset_link=reset_link
+        )
+
+    return templates.TemplateResponse(
+        "forgot_password.html",
+        {"request": request, "success": success_msg}
+    )
+
+
+@router.get("/reset-password")
+def reset_password_page(request: Request, token: str = ""):
+    if not token:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "valid_token": False}
+        )
+
+    resets = get_collection("password_resets")
+    record = resets.find_one({
+        "token": token,
+        "used": False,
+        "expires_at": {"$gt": datetime.now(timezone.utc)}
+    })
+
+    return templates.TemplateResponse(
+        "reset_password.html",
+        {
+            "request": request,
+            "valid_token": record is not None,
+            "token": token
+        }
+    )
+
+
+@router.post("/reset-password")
+def reset_password_submit(
+    request: Request,
+    token: str = Form(...),
+    password: str = Form(...),
+    confirm_password: str = Form(...),
+):
+    # Validate passwords match
+    if password != confirm_password:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "valid_token": True, "token": token,
+             "error": "Passwords do not match"}
+        )
+
+    # Validate password length
+    if len(password) < 8:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "valid_token": True, "token": token,
+             "error": "Password must be at least 8 characters"}
+        )
+
+    resets = get_collection("password_resets")
+    record = resets.find_one({
+        "token": token,
+        "used": False,
+        "expires_at": {"$gt": datetime.now(timezone.utc)}
+    })
+
+    if not record:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "valid_token": False,
+             "error": "This reset link is invalid or has expired."}
+        )
+
+    # Update password
+    users = get_collection("users")
+    users.update_one(
+        {"email": record["email"]},
+        {"$set": {"password": hash_password(password)}}
+    )
+
+    # Mark token as used
+    resets.update_one(
+        {"_id": record["_id"]},
+        {"$set": {"used": True}}
+    )
+
+    return RedirectResponse("/login", status_code=302)

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="panel auth-panel fade-in" style="margin-top: 120px; text-align: center;">
+    <div style="font-size: 80px; font-weight: 900; letter-spacing: -4px; margin-bottom: 16px;
+                background: linear-gradient(180deg, #fca5a5 0%, #7f1d1d 100%);
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        500
+    </div>
+
+    <div class="hero-title" style="color: var(--danger); margin-bottom: 8px;">SYSTEM ERROR</div>
+
+    <p style="font-size: 15px; color: var(--muted); line-height: 1.6; margin-bottom: 30px;">
+        Something went wrong on our end. Our systems have been notified
+        and we're working to resolve the issue.
+    </p>
+
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <a href="/" class="btn-primary">Return Home</a>
+        <a href="/dashboard" class="btn-secondary">Go to Dashboard</a>
+    </div>
+</section>
+
+{% endblock %}

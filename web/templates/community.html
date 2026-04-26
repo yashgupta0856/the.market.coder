@@ -37,4 +37,20 @@
   {% endfor %}
 </div>
 
+{% if total_pages > 1 %}
+<nav class="fade-in" style="display:flex; align-items:center; justify-content:center; gap:16px; margin-top:40px; margin-bottom:20px;">
+  {% if has_prev %}
+  <a href="/community?page={{ page - 1 }}" class="btn-secondary" style="padding:10px 20px; font-size:14px;">← Previous</a>
+  {% endif %}
+
+  <span style="font-size:14px; font-weight:600; color:var(--muted);">
+    Page {{ page }} of {{ total_pages }}
+  </span>
+
+  {% if has_next %}
+  <a href="/community?page={{ page + 1 }}" class="btn-secondary" style="padding:10px 20px; font-size:14px;">Next →</a>
+  {% endif %}
+</nav>
+{% endif %}
+
 {% endblock %}

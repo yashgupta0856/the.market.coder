@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form, Request, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, Form, Request, BackgroundTasks, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, timezone
@@ -18,7 +18,7 @@ templates = Jinja2Templates(directory="web/templates")
 
 
 @router.get("/community", response_class=HTMLResponse)
-def community_page(request: Request):
+def community_page(request: Request, page: int = Query(1)):
 
     email = request.session.get("user_email")
 
@@ -30,11 +30,17 @@ def community_page(request: Request):
     if not user_has_active_access(email):
         return RedirectResponse("/renew", status_code=302)
 
+    per_page = 6
     col = get_collection("community_posts")
+    total = col.count_documents({})
+    total_pages = max(1, -(-total // per_page))  # ceil division
+    page = max(1, min(page, total_pages))
 
     posts = list(
         col.find({}, {"_id": 0})
         .sort("created_at", -1)
+        .skip((page - 1) * per_page)
+        .limit(per_page)
     )
 
     return templates.TemplateResponse(
@@ -42,7 +48,11 @@ def community_page(request: Request):
         {
             "request": request,
             "posts": posts,
-            "user_email": email
+            "user_email": email,
+            "page": page,
+            "total_pages": total_pages,
+            "has_prev": page > 1,
+            "has_next": page < total_pages
         }
     )
 
