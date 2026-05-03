@@ -61,3 +61,38 @@ def upsert_df_to_mongo(
         col.bulk_write(operations[i : i + batch_size], ordered=False)
 
     return len(records)
+
+
+def set_on_insert_df_to_mongo(
+    df,
+    collection_name: str,
+    key_fields: list[str],
+    batch_size: int = 5000,
+) -> int:
+    """
+    Write records into a MongoDB collection using ``$setOnInsert`` semantics.
+
+    Existing documents (matched by *key_fields*) are **never overwritten**.
+    Only truly new documents are inserted.  This is the correct primitive
+    for pivot-anchor storage: once a pivot is written it must not be
+    changed by subsequent pipeline runs.
+    """
+    if df is None or df.empty:
+        return 0
+
+    col = get_collection(collection_name)
+    records = df.to_dict(orient="records")
+
+    operations = [
+        UpdateOne(
+            {field: record[field] for field in key_fields},
+            {"$setOnInsert": record},
+            upsert=True,
+        )
+        for record in records
+    ]
+
+    for i in range(0, len(operations), batch_size):
+        col.bulk_write(operations[i : i + batch_size], ordered=False)
+
+    return len(records)

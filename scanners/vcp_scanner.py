@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor
 
 
 def trend_gate(symbol_df):
@@ -208,59 +209,79 @@ def contraction_count_gate(symbol_df, min_contractions=2):
 # =========================================================
 
 
-def detect_breakout(symbol_df, consolidation_window=20, vol_surge_factor=1.4):
+def compute_pivot_price(symbol_df, consolidation_window=20) -> float:
+    """
+    Compute the pivot price at the moment a VCP is first confirmed.
+
+    The pivot is the highest high inside the consolidation window
+    (excluding the current bar).  This value is persisted in
+    ``vcp_pivot_anchors`` and must NOT change on future pipeline runs.
+
+    Args:
+        symbol_df:            DataFrame sorted by date.
+        consolidation_window: Number of bars to look back for the base.
+
+    Returns:
+        float — the pivot (resistance) price.
+    """
+    if len(symbol_df) < consolidation_window + 1:
+        # Not enough data — use all available bars
+        return float(symbol_df["high"].max())
+
+    consolidation = symbol_df.iloc[-(consolidation_window + 1):-1]
+    return float(consolidation["high"].max())
+
+
+def detect_breakout(symbol_df, anchored_pivot: float, vol_surge_factor: float = 1.4) -> dict:
     """
     Detect if a VCP candidate is breaking out of its consolidation.
 
+    Evaluates today's close against a FIXED, caller-supplied pivot price.
+    The pivot must be sourced from ``vcp_pivot_anchors`` (set on the day
+    the stock first qualified as a VCP candidate) so it never drifts with
+    the sliding consolidation window.
+
     Breakout conditions:
-    1. Today's close is above the highest close in the consolidation
-       period (excluding today) — the "pivot point"
-    2. Today's volume is above average (institutional accumulation)
+    1. Today's close > anchored_pivot  (price breakout)
+    2. Today's volume > vol_surge_factor × consolidation avg  (volume confirmation)
 
     Args:
-        symbol_df:             DataFrame with close, volume, high columns.
-        consolidation_window:  Number of bars to define the consolidation.
-        vol_surge_factor:      Volume must be this × average to confirm.
+        symbol_df:      DataFrame with close, volume columns, sorted by date.
+        anchored_pivot: The fixed pivot price established on confirmation day.
+        vol_surge_factor: Volume ratio threshold for institutional confirmation.
 
     Returns:
         dict with:
-        - is_breakout:     bool — whether a breakout is detected
-        - pivot_price:     float — the resistance level that was broken
-        - breakout_volume: float — ratio of today's volume vs average
+        - is_breakout:     bool
+        - pivot_price:     float (the anchored pivot, echoed back)
+        - breakout_volume: float (ratio of today's vol vs avg)
     """
-    required_cols = ["close", "volume", "high"]
-
+    required_cols = ["close", "volume"]
     for col in required_cols:
         if col not in symbol_df.columns:
             raise ValueError(f"Missing required column: {col}")
 
-    if len(symbol_df) < consolidation_window + 1:
+    if len(symbol_df) < 21:
         return {
             "is_breakout": False,
-            "pivot_price": None,
-            "breakout_volume": None
+            "pivot_price": round(float(anchored_pivot), 2),
+            "breakout_volume": None,
         }
 
     latest = symbol_df.iloc[-1]
-    consolidation = symbol_df.iloc[-(consolidation_window + 1):-1]
-
-    # Pivot = highest close in the consolidation range
-    pivot_price = consolidation["high"].max()
-
-    # Average volume during consolidation (the quiet period)
+    # Use the same 20-bar window for volume baseline
+    consolidation = symbol_df.iloc[-21:-1]
     avg_vol = consolidation["volume"].mean()
 
-    # Breakout conditions
-    price_break = latest["close"] > pivot_price
+    price_break = latest["close"] > anchored_pivot
     vol_ratio = latest["volume"] / avg_vol if avg_vol > 0 else 0
     vol_surge = vol_ratio >= vol_surge_factor
 
     return {
         "is_breakout": bool(price_break and vol_surge),
-        "pivot_price": round(float(pivot_price), 2),
-        "breakout_volume": round(float(vol_ratio), 2)
+        "pivot_price": round(float(anchored_pivot), 2),
+        "breakout_volume": round(float(vol_ratio), 2),
     }
-
 
 
 # =========================================================
@@ -349,9 +370,17 @@ def is_vcp_candidate(df: pd.DataFrame) -> bool:
     return True
 
 
-def get_vcp_details(df: pd.DataFrame) -> dict:
+def get_vcp_details(df: pd.DataFrame, anchored_pivot: float | None = None) -> dict:
     """
     Get detailed VCP analysis for a candidate stock.
+
+    Args:
+        df:             OHLCV + indicator DataFrame sorted by date.
+        anchored_pivot: If provided (from ``vcp_pivot_anchors``), breakout is
+                        evaluated against this fixed price.  For brand-new
+                        candidates the caller passes None and the pivot is
+                        computed fresh from the current consolidation window.
+
     Returns gate results, contraction info, breakout status, and base structure.
     """
     details = {
@@ -399,7 +428,7 @@ def get_vcp_details(df: pd.DataFrame) -> dict:
         details["contraction_count"] >= 1
     )
 
-    # Only compute expensive analysis for actual candidates (VCP Issue 2 fix)
+    # Only compute expensive analysis for actual candidates
     if details["vcp_candidate"]:
         # Base structure detection
         base_info = detect_base(df)
@@ -407,10 +436,13 @@ def get_vcp_details(df: pd.DataFrame) -> dict:
         details["base_depth_pct"] = base_info["base_depth_pct"]
         details["base_length_days"] = base_info["base_length_days"]
 
-        # Breakout detection
-        breakout = detect_breakout(df)
-        details["is_breakout"] = breakout["is_breakout"]
-        details["pivot_price"] = breakout["pivot_price"]
+        # Breakout detection against the anchored (fixed) pivot.
+        # For a brand-new candidate anchored_pivot is None — compute it fresh
+        # from the current consolidation window and it will be persisted.
+        pivot = anchored_pivot if anchored_pivot is not None else compute_pivot_price(df)
+        breakout = detect_breakout(df, anchored_pivot=pivot)
+        details["is_breakout"]     = breakout["is_breakout"]
+        details["pivot_price"]     = breakout["pivot_price"]
         details["breakout_volume"] = breakout["breakout_volume"]
 
         # Quality classification
@@ -435,9 +467,23 @@ def get_vcp_details(df: pd.DataFrame) -> dict:
 # =========================================================
 
 
-def scan_universe(indicator_df, max_workers=8) -> pd.DataFrame:
-    from concurrent.futures import ThreadPoolExecutor
+def scan_universe(
+    indicator_df,
+    existing_anchors: dict | None = None,
+    max_workers: int = 8,
+) -> pd.DataFrame:
+    """
+    Scan every symbol and return a one-row-per-symbol VCP results DataFrame.
 
+    Args:
+        indicator_df:     Grouped DataFrame / dict / iterable of (symbol, df) pairs.
+        existing_anchors: Mapping of {symbol: pivot_price} loaded from
+                          ``vcp_pivot_anchors``.  When a symbol is present
+                          its stored pivot is passed to ``get_vcp_details``
+                          so ``is_breakout`` is evaluated against the fixed
+                          entry price, not the current sliding window.
+        max_workers:      Thread-pool size.
+    """
     if isinstance(indicator_df, pd.DataFrame):
         groups = list(indicator_df.groupby("symbol"))
     elif isinstance(indicator_df, dict):
@@ -445,11 +491,14 @@ def scan_universe(indicator_df, max_workers=8) -> pd.DataFrame:
     else:
         groups = list(indicator_df)
 
+    anchors = existing_anchors or {}
+
     def _process_symbol(args):
         symbol, symbol_df = args
         symbol_df = symbol_df.sort_values("date")
+        anchored_pivot = anchors.get(symbol)  # None for new candidates
         try:
-            details = get_vcp_details(symbol_df)
+            details = get_vcp_details(symbol_df, anchored_pivot=anchored_pivot)
         except Exception:
             details = {
                 "vcp_candidate": False,
