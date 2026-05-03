@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="fade-in">
+  <div class="hero-badge" style="margin-bottom:8px;">Personal Watchlist</div>
+  <h1 style="font-size:32px; font-weight:800; margin:0 0 8px 0;">My Watchlist</h1>
+  <p style="color:var(--muted); font-size:14px; margin-bottom:32px;">
+    Track your favorite stocks with live prices.
+    <span id="price-timer" style="color:var(--accent-gold); font-weight:600;"></span>
+  </p>
+
+  <!-- ADD STOCK FORM -->
+  <div class="panel" style="margin-bottom:32px;">
+    <h3 style="margin-top:0; font-size:16px; font-weight:700; color:var(--text); margin-bottom:16px;">
+      Add Stock
+    </h3>
+    <form id="addForm" style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+      <div class="form-group" style="flex:1; min-width:160px;">
+        <label>Symbol</label>
+        <input type="text" id="addSymbol" placeholder="e.g. RELIANCE" required
+               style="text-transform:uppercase;">
+      </div>
+      <div class="form-group" style="flex:2; min-width:200px;">
+        <label>Notes (optional)</label>
+        <input type="text" id="addNotes" placeholder="e.g. Watch for breakout above 2800">
+      </div>
+      <button type="submit" class="btn-primary" id="addBtn" style="height:46px; white-space:nowrap;">
+        + Add to Watchlist
+      </button>
+    </form>
+    <div id="addError" style="color:#ef4444; font-size:13px; margin-top:8px; display:none;"></div>
+    <div id="addSuccess" style="color:#22c993; font-size:13px; margin-top:8px; display:none;"></div>
+  </div>
+
+  <!-- WATCHLIST TABLE -->
+  <div class="panel rank-panel" id="watchlistPanel">
+    <h2 style="display:flex; justify-content:space-between; align-items:center;">
+      <span>Watchlist</span>
+      <span id="stockCount" style="font-size:13px; color:var(--muted); font-weight:500;"></span>
+    </h2>
+    <div class="rank-table-scroll">
+      <table class="rank-table" id="watchlistTable">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>Symbol</th>
+            <th style="text-align:right;">Price (₹)</th>
+            <th style="text-align:right;">Change</th>
+            <th>Notes</th>
+            <th style="width:100px;">Added</th>
+            <th style="width:150px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="watchlistBody">
+          <tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- EDIT MODAL -->
+<div class="mc-modal hidden" id="editModal">
+  <div class="mc-content">
+    <div class="mc-header">
+      <span>Edit Notes — <span id="editSymbolTitle"></span></span>
+      <span onclick="closeEditModal()">×</span>
+    </div>
+    <form id="editForm">
+      <input type="hidden" id="editSymbol">
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="editNotes" rows="3" placeholder="Your notes..."></textarea>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%; margin-top:12px;">
+        Save Changes
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ═══════════════════════════════════════════════════════════════
+// WATCHLIST CLIENT — Live prices every 60s, list every 10s
+// ═══════════════════════════════════════════════════════════════
+
+let livePrices = {};
+let priceCountdown = 60;
+
+// ─── FETCH WATCHLIST ────────────────────────────────────────
+async function loadWatchlist() {
+  try {
+    const res = await fetch('/api/watchlist');
+    const data = await res.json();
+    renderTable(data.stocks || []);
+  } catch (err) {
+    console.error('Failed to load watchlist:', err);
+  }
+}
+
+// ─── FETCH LIVE PRICES ─────────────────────────────────────
+async function loadPrices() {
+  try {
+    const res = await fetch('/api/watchlist/prices');
+    const data = await res.json();
+    livePrices = data.prices || {};
+    updatePricesInTable();
+  } catch (err) {
+    console.error('Failed to load prices:', err);
+  }
+}
+
+function updatePricesInTable() {
+  for (const sym in livePrices) {
+    const priceEl = document.getElementById('price-' + sym);
+    const changeEl = document.getElementById('change-' + sym);
+    if (!priceEl || !changeEl) continue;
+
+    const p = livePrices[sym];
+    priceEl.textContent = p.price > 0 ? '₹' + p.price.toLocaleString('en-IN', {minimumFractionDigits:2}) : '—';
+
+    if (p.change !== 0) {
+      const sign = p.change > 0 ? '+' : '';
+      changeEl.textContent = sign + p.change.toFixed(2) + ' (' + sign + p.change_pct.toFixed(2) + '%)';
+      changeEl.style.color = p.change > 0 ? '#22c993' : '#ef4444';
+    } else {
+      changeEl.textContent = '—';
+      changeEl.style.color = 'var(--muted)';
+    }
+  }
+}
+
+// ─── RENDER TABLE ───────────────────────────────────────────
+function renderTable(stocks) {
+  const tbody = document.getElementById('watchlistBody');
+  const countEl = document.getElementById('stockCount');
+  countEl.textContent = stocks.length + ' stock' + (stocks.length !== 1 ? 's' : '');
+
+  if (stocks.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">
+        No stocks in your watchlist yet. Add one above!
+      </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = stocks.map((s, i) => {
+    const p = livePrices[s.symbol] || {};
+    const priceStr = p.price > 0 ? '₹' + p.price.toLocaleString('en-IN', {minimumFractionDigits:2}) : '—';
+    let changeStr = '—';
+    let changeColor = 'var(--muted)';
+    if (p.change && p.change !== 0) {
+      const sign = p.change > 0 ? '+' : '';
+      changeStr = sign + p.change.toFixed(2) + ' (' + sign + p.change_pct.toFixed(2) + '%)';
+      changeColor = p.change > 0 ? '#22c993' : '#ef4444';
+    }
+
+    return `
+    <tr>
+      <td style="color:var(--muted);">${i + 1}</td>
+      <td style="font-weight:700; color:var(--text); letter-spacing:-0.2px;">${s.symbol}</td>
+      <td id="price-${s.symbol}" style="text-align:right; font-weight:700; font-family:monospace; font-size:14px;">${priceStr}</td>
+      <td id="change-${s.symbol}" style="text-align:right; font-weight:600; font-size:13px; color:${changeColor};">${changeStr}</td>
+      <td style="color:var(--text-secondary); font-size:13px;">${s.notes || '—'}</td>
+      <td style="color:var(--muted); font-size:12px;">${formatDate(s.added_at)}</td>
+      <td>
+        <button class="risk-btn btn-primary" onclick="openEditModal('${s.symbol}', '${escapeQuotes(s.notes || '')}')">Edit</button>
+        <button class="risk-btn btn-secondary" onclick="removeStock('${s.symbol}')" style="margin-left:4px;">Remove</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+}
+
+function escapeQuotes(str) {
+  return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+// ─── ADD STOCK ──────────────────────────────────────────────
+document.getElementById('addForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const symbol = document.getElementById('addSymbol').value.trim();
+  const notes  = document.getElementById('addNotes').value.trim();
+  const errEl  = document.getElementById('addError');
+  const sucEl  = document.getElementById('addSuccess');
+  const btn    = document.getElementById('addBtn');
+
+  errEl.style.display = 'none';
+  sucEl.style.display = 'none';
+  if (!symbol) return;
+
+  btn.textContent = 'Validating...';
+  btn.disabled = true;
+
+  const body = new FormData();
+  body.append('symbol', symbol);
+  body.append('notes', notes);
+
+  try {
+    const res = await fetch('/api/watchlist/add', { method: 'POST', body });
+    const data = await res.json();
+
+    if (res.ok) {
+      sucEl.textContent = `✓ ${data.symbol} added (₹${data.price})`;
+      sucEl.style.display = 'block';
+      document.getElementById('addSymbol').value = '';
+      document.getElementById('addNotes').value = '';
+      loadWatchlist();
+      loadPrices();
+      setTimeout(() => sucEl.style.display = 'none', 3000);
+    } else {
+      errEl.textContent = data.error || 'Failed to add';
+      errEl.style.display = 'block';
+      setTimeout(() => errEl.style.display = 'none', 4000);
+    }
+  } catch (err) {
+    errEl.textContent = 'Network error';
+    errEl.style.display = 'block';
+  }
+
+  btn.textContent = '+ Add to Watchlist';
+  btn.disabled = false;
+});
+
+// ─── REMOVE STOCK ───────────────────────────────────────────
+async function removeStock(symbol) {
+  if (!confirm(`Remove ${symbol} from watchlist?`)) return;
+  const body = new FormData();
+  body.append('symbol', symbol);
+  await fetch('/api/watchlist/remove', { method: 'POST', body });
+  loadWatchlist();
+}
+
+// ─── EDIT MODAL ─────────────────────────────────────────────
+function openEditModal(symbol, notes) {
+  document.getElementById('editSymbol').value = symbol;
+  document.getElementById('editSymbolTitle').textContent = symbol;
+  document.getElementById('editNotes').value = notes;
+  document.getElementById('editModal').classList.remove('hidden');
+}
+function closeEditModal() {
+  document.getElementById('editModal').classList.add('hidden');
+}
+
+document.getElementById('editForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = new FormData();
+  body.append('symbol', document.getElementById('editSymbol').value);
+  body.append('notes', document.getElementById('editNotes').value);
+  await fetch('/api/watchlist/update', { method: 'POST', body });
+  closeEditModal();
+  loadWatchlist();
+});
+
+document.getElementById('editModal').addEventListener('click', (e) => {
+  if (e.target.classList.contains('mc-modal')) closeEditModal();
+});
+
+// ─── AUTO REFRESH ───────────────────────────────────────────
+// Watchlist: every 10s | Prices: every 60s
+function startAutoRefresh() {
+  const timerEl = document.getElementById('price-timer');
+
+  setInterval(() => {
+    priceCountdown--;
+    if (priceCountdown <= 0) {
+      loadPrices();
+      priceCountdown = 60;
+    }
+    timerEl.textContent = `(prices update in ${priceCountdown}s)`;
+  }, 1000);
+
+  // Watchlist refresh every 10s
+  setInterval(loadWatchlist, 10000);
+}
+
+// ─── INIT ───────────────────────────────────────────────────
+loadWatchlist();
+loadPrices();
+startAutoRefresh();
+</script>
+{% endblock %}

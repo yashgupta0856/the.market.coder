@@ -20,6 +20,7 @@ from web.routes.api_fundamentals import router as fund_router
 from web.routes.auth import router as auth_router
 from web.routes.news import router as news_router
 from web.routes.api_sniper import router as sniper_router
+from web.routes.watchlist import router as watchlist_router
 
 from web.routes import api_chart 
 
@@ -92,6 +93,7 @@ app.include_router(mc_router)
 app.include_router(fund_router)
 app.include_router(news_router)
 app.include_router(sniper_router)
+app.include_router(watchlist_router)
 app.include_router(api_chart.router)
 
 logger.info("the.market.coder application started successfully")
