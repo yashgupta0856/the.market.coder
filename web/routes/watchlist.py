@@ -2,6 +2,8 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 
 from utils.mongo import get_collection
 from web.services.access_control import user_has_active_access
@@ -10,6 +12,10 @@ import yfinance as yf
 
 router = APIRouter(tags=["Watchlist"])
 templates = Jinja2Templates(directory="web/templates")
+
+# ─── In-memory price cache (TTL = 30 seconds) ───────────────────
+_price_cache = {}      # { symbol: { data: {...}, ts: float } }
+CACHE_TTL = 30         # seconds
 
 
 # ─── HELPER: Fetch price from yfinance ───────────────────────────
