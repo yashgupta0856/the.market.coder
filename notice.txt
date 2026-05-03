@@ -1,3 +1,5 @@
-for all those stocks which are vcp candidates but doesn't qualify , i want full computations for them as well in the MongoDB
-user specific watchlist ( which updates on every 10 seconds ) and not specific to the vcp or sniper scanner list, including stocks from all over the equity universe
-export to csv option for vcp stock list and sniper stock list
+payment integation
+tradinmg view ki strategy
+entry hote he telegram par update karna based on the pine script strategy
+
+idea : creating an ai model based on this project data 
